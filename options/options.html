@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabel Settings</title>
+  <link rel="icon" type="image/png" href="../icons/icon128.png">
+  <style>
+    :root {
+      --bg-primary: #121625;
+      --bg-secondary: #1a2035;
+      --bg-card: rgba(26, 32, 53, var(--custom-card-opacity, 0.75));
+      --glass-border: rgba(100, 120, 180, 0.12);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-tertiary: #64748b;
+      --accent: #6366f1;
+      --accent-light: #818cf8;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef);
+      --success: #34d399;
+      --danger: #f87171;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .theme-light {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: rgba(255, 255, 255, var(--custom-card-opacity, 0.75));
+      --glass-border: rgba(99, 102, 241, 0.08);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #64748b;
+      --accent-glow: rgba(99, 102, 241, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding-bottom: 48px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 30% 30%, rgba(99,102,241,0.06) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 70%, rgba(139,92,246,0.04) 0%, transparent 50%);
+      z-index: -1;
+    }
+
+    /* Header styles matching dashboard */
+    .dashboard-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(18, 22, 37, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 14px 24px;
+      margin-bottom: 40px;
+    }
+
+    .theme-light .dashboard-header {
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    .header-inner {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-brand__icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
+
+    .header-brand__name {
+      font-size: 20px;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    .settings-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 24px;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+    .settings-section {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .settings-section h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-tertiary);
+      margin-bottom: 20px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(100,120,180,0.06);
+    }
+
+    .setting-row:last-child { border-bottom: none; }
+
+    .setting-info { flex: 1; }
+
+    .setting-info label {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: block;
+      cursor: pointer;
+    }
+
+    .setting-info p {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-top: 3px;
+    }
+
+    /* Toggle switch */
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #374151;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+
+    .toggle-slider::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.25s;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background: var(--accent);
+    }
+
+    .toggle input:checked + .toggle-slider::after {
+      transform: translateX(20px);
+    }
+
+    /* Select */
+    .setting-select {
+      background: var(--bg-secondary);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 8px 32px 8px 12px;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .setting-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid var(--glass-border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .btn--danger {
+      border-color: rgba(248,113,113,0.3);
+      color: var(--danger);
+    }
+
+    .btn--danger:hover {
+      background: rgba(248,113,113,0.1);
+      border-color: var(--danger);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--glass-border);
+      border-left: 3px solid var(--success);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      color: var(--text-primary);
+      font-size: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      z-index: 1000;
+      animation: toastIn 0.3s ease-out;
+    }
+
+    .toast--error { border-left-color: var(--danger); }
+
+    @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .settings-footer {
+      text-align: center;
+      margin-top: 40px;
+      color: var(--text-tertiary);
+      font-size: 13px;
+    }
+
+    .settings-footer a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+
+    ::selection { background: var(--accent); color: white; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <img src="../icons/icon128.png" alt="Tabel" class="header-brand__icon">
+        <span class="header-brand__name" data-i18n="settingsTitle">Tabel Settings</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="settings-container">
+    <!-- Appearance -->
+    <div class="settings-section">
+      <h2 data-i18n="settingsTheme">Theme</h2>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label data-i18n="settingsTheme">Theme</label>
+        </div>
+        <select class="setting-select" id="setting-theme">
+          <option value="dark" data-i18n="settingsThemeDark">Dark</option>
+          <option value="light" data-i18n="settingsThemeLight">Light</option>
+        </select>
+      </div>
+
+      <div class="setting-row" id="bg-opacity-row">
+        <div class="setting-info">
+          <label data-i18n="settingsBgOpacity">Card Transparency</label>
+          <p data-i18n="settingsBgOpacityDesc">Adjust the transparency of groups and cards.</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; width: 180px;">
+          <input type="range" id="setting-bg-opacity" min="10" max="100" value="75" style="flex: 1; accent-color: var(--accent);">
+          <span id="bg-opacity-val" style="font-size: 13px; color: var(--text-secondary); width: 32px; text-align: right;">75%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Startup -->
+    <div class="settings-section">
+      <h2 data-i18n="settingsStartup">Startup</h2>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-startup" data-i18n="settingsStartup">Open on Startup</label>
+          <p data-i18n="settingsStartupDesc">Keep Tabel Dashboard open when you start Chrome.</p>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="setting-startup">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Data Management -->
+    <div class="settings-section">
+      <h2 data-i18n="settingsData">Data</h2>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label data-i18n="settingsTransfer">Export / Import</label>
+          <p data-i18n="settingsTransferDesc">Backup or restore your tab data.</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn" id="btn-export" data-i18n="settingsExport">Export</button>
+          <button class="btn" id="btn-import" data-i18n="settingsImport">Import</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label data-i18n="deleteAll">Delete All</label>
+          <p data-i18n="deleteAllDesc">Delete all saved tab data.</p>
+        </div>
+        <button class="btn btn--danger" id="btn-delete-all" data-i18n="deleteAll">Delete All</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2 data-i18n="settingsPrivacy">Privacy</h2>
+      <div class="setting-info">
+        <label data-i18n="privacyNoticeTitle">Privacy information</label>
+        <p data-i18n="privacyNoticeData"></p>
+        <p data-i18n="privacyNoticeStorage"></p>
+        <p data-i18n="privacyNoticeSharing"></p>
+      </div>
+    </div>
+
+    <div class="settings-footer">
+      <p id="app-version">Tabel</p>
+    </div>
+  </div>
+
+  <input type="file" id="import-file" accept=".json" style="display:none">
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>

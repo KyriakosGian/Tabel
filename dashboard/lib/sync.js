@@ -1,0 +1,185 @@
+/**
+ * Tabel - Sync Engine
+ * Syncs tab groups and items across devices via chrome.storage.sync
+ * (which is backed by the user's own Google account).
+ *
+ * chrome.storage.sync constraints we work around:
+ *   - QUOTA_BYTES_PER_ITEM = 8,192 bytes  → we chunk the payload (< 7KB/chunk)
+ *   - QUOTA_BYTES (total)   = 102,400 bytes
+ *   - MAX_ITEMS             = 512 keys
+ *
+ * Merge is non-destructive (union of local + remote, newest wins per id),
+ * so concurrent edits on multiple devices converge instead of clobbering.
+ */
+
+import { db } from './db.js';
+
+const SYNC_META_KEY = 'tabel_sync_meta';
+const CHUNK_PREFIX  = 'tabel_sync_chunk_';
+const DEVICE_ID_KEY = 'tabelDeviceId';
+
+// 3500 UTF-16 code units → ≤ 7000 bytes in the worst case (2 bytes/char for
+// Greek/BMP text), comfortably under the 8192-byte per-item quota.
+const MAX_CHUNK_CHARS = 3500;
+const PUSH_DEBOUNCE_MS = 2000;
+// Coalesce bursts of remote change events (e.g. chunks arriving separately over a
+// slow/VPN connection) into a single pull instead of one pull per event.
+const PULL_DEBOUNCE_MS = 400;
+
+export class SyncManager {
+  /**
+   * @param {Object} callbacks
+   *   onRemoteUpdate(mergeResult) — called after remote data is merged in
+   *   onError(messageKey)         — called on quota/other failures
+   */
+  constructor(callbacks = {}) {
+    this.callbacks = callbacks;
+    this.deviceId = null;
+    this._pushTimer = null;
+    this._pullTimer = null;
+    this._applyingRemote = false;
+  }
+
+  /** Set up the device id, do an initial pull, and listen for remote changes. */
+  async init() {
+    this.deviceId = await this._getDeviceId();
+
+    const hadRemote = await this.pull();
+    if (!hadRemote) {
+      // Cloud is empty — seed it with whatever we have locally.
+      const counts = await db.getCounts();
+      if (counts.groups > 0) this.schedulePush();
+    }
+
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'sync') return;
+      // Ignore the echo of our own writes (our pushes always include meta with our id).
+      const meta = changes[SYNC_META_KEY]?.newValue;
+      if (meta && meta.deviceId === this.deviceId) return;
+      // React to remote writes to either the meta key or any data chunk — chunks can
+      // arrive in a later event than the meta, so we must not key off meta alone.
+      const touchesSync = changes[SYNC_META_KEY] ||
+        Object.keys(changes).some(k => k.startsWith(CHUNK_PREFIX));
+      if (touchesSync) this.schedulePull();
+    });
+  }
+
+  /** Debounced push — call after any local mutation. */
+  schedulePush() {
+    clearTimeout(this._pushTimer);
+    this._pushTimer = setTimeout(() => this.push(), PUSH_DEBOUNCE_MS);
+  }
+
+  /** Push immediately without pulling first. Used by import and delete-all actions. */
+  async pushNow() {
+    clearTimeout(this._pushTimer);
+    if (!this.deviceId) this.deviceId = await this._getDeviceId();
+    return this.push();
+  }
+
+  /** Debounced pull — coalesces a burst of remote change events into one merge. */
+  schedulePull() {
+    clearTimeout(this._pullTimer);
+    this._pullTimer = setTimeout(() => this.pull(), PULL_DEBOUNCE_MS);
+  }
+
+  /** Serialize local data, chunk it, and write it to chrome.storage.sync. */
+  async push() {
+    if (this._applyingRemote) return; // don't echo freshly-merged remote data back
+    try {
+      const data = await db.exportAll(); // { version, exportedAt, groups, items }
+      const payload = JSON.stringify({
+        groups: data.groups,
+        items: data.items,
+        tombstones: data.tombstones
+      });
+      const chunks = this._chunk(payload);
+
+      const writeObj = { [SYNC_META_KEY]: {
+        deviceId: this.deviceId,
+        updatedAt: Date.now(),
+        chunkCount: chunks.length,
+        version: data.version
+      } };
+      chunks.forEach((c, i) => { writeObj[CHUNK_PREFIX + i] = c; });
+
+      // Identify stale chunk keys left over from a previous, larger payload.
+      const existing = await chrome.storage.sync.get(null);
+      const staleKeys = Object.keys(existing).filter(k =>
+        k.startsWith(CHUNK_PREFIX) &&
+        parseInt(k.slice(CHUNK_PREFIX.length), 10) >= chunks.length
+      );
+
+      await chrome.storage.sync.set(writeObj);
+      if (staleKeys.length) await chrome.storage.sync.remove(staleKeys);
+      return true;
+    } catch (e) {
+      console.error('[Sync] Push failed:', e);
+      // Most likely the total sync quota was exceeded.
+      this.callbacks.onError?.('syncQuotaError');
+      return false;
+    }
+  }
+
+  /**
+   * Read remote chunks, reassemble, and merge into the local DB.
+   * @returns {boolean} true if remote data existed and was applied.
+   */
+  async pull() {
+    try {
+      const all = await chrome.storage.sync.get(null);
+      const meta = all[SYNC_META_KEY];
+      if (!meta || !meta.chunkCount) return false;
+
+      let payload = '';
+      for (let i = 0; i < meta.chunkCount; i++) {
+        const part = all[CHUNK_PREFIX + i];
+        if (part === undefined) {
+          // A chunk is still propagating — bail and retry on the next change event.
+          console.warn('[Sync] Missing chunk', i, '— skipping this pull');
+          return false;
+        }
+        payload += part;
+      }
+
+      const remoteData = JSON.parse(payload);
+
+      this._applyingRemote = true;
+      const result = await db.mergeAll(remoteData);
+      this._applyingRemote = false;
+
+      // Only re-render when the merge actually brought in remote changes — avoids
+      // needless redraws when a pull turns out to be identical to local data.
+      if (result.remoteOnlyCount > 0 || result.updatedCount > 0) {
+        this.callbacks.onRemoteUpdate?.(result);
+      }
+
+      // We hold data the cloud doesn't have yet → push it so other devices receive it.
+      if (result.localOnlyCount > 0) this.schedulePush();
+
+      return true;
+    } catch (e) {
+      this._applyingRemote = false;
+      console.error('[Sync] Pull failed:', e);
+      return false;
+    }
+  }
+
+  /** Split a string into chunks small enough for the per-item quota. */
+  _chunk(str) {
+    const chunks = [];
+    for (let i = 0; i < str.length; i += MAX_CHUNK_CHARS) {
+      chunks.push(str.slice(i, i + MAX_CHUNK_CHARS));
+    }
+    return chunks.length ? chunks : [''];
+  }
+
+  /** Get (or lazily create) a stable per-device identifier. */
+  async _getDeviceId() {
+    const stored = await chrome.storage.local.get(DEVICE_ID_KEY);
+    if (stored[DEVICE_ID_KEY]) return stored[DEVICE_ID_KEY];
+    const id = `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    await chrome.storage.local.set({ [DEVICE_ID_KEY]: id });
+    return id;
+  }
+}

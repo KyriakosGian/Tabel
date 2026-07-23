@@ -1,0 +1,256 @@
+{
+  "extName": {
+    "message": "Tabel — Tab Manager",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Organize open tabs into synced visual groups, save memory, and restore them whenever you need.",
+    "description": "Extension description"
+  },
+  "actionTitle": {
+    "message": "Organize active tabs",
+    "description": "Action button tooltip"
+  },
+  "dashboardTitle": {
+    "message": "Tabel Dashboard",
+    "description": "Dashboard page title"
+  },
+  "searchPlaceholder": {
+    "message": "Search tabs...",
+    "description": "Search field placeholder"
+  },
+  "groupDefaultName": {
+    "message": "Tabs",
+    "description": "Default group name"
+  },
+  "restoreAll": {
+    "message": "Open All",
+    "description": "Restore all tabs button"
+  },
+  "deleteGroup": {
+    "message": "Delete Group",
+    "description": "Delete group button"
+  },
+  "restoreTab": {
+    "message": "Open Tab",
+    "description": "Restore tab tooltip"
+  },
+  "deleteTab": {
+    "message": "Delete Tab",
+    "description": "Delete tab tooltip"
+  },
+  "confirmDeleteGroup": {
+    "message": "Are you sure you want to delete this group?",
+    "description": "Delete group confirmation"
+  },
+  "confirmDeleteAll": {
+    "message": "Are you sure you want to delete ALL data?",
+    "description": "Delete all confirmation"
+  },
+  "tabs": {
+    "message": "tabs",
+    "description": "Tabs label"
+  },
+  "tab": {
+    "message": "tab",
+    "description": "Single tab label"
+  },
+  "noTabs": {
+    "message": "No saved tabs.",
+    "description": "Empty dashboard message"
+  },
+  "noTabsSubtext": {
+    "message": "Click the Tabel icon to organize your open tabs.",
+    "description": "Empty dashboard submessage"
+  },
+  "settingsTitle": {
+    "message": "Tabel Settings",
+    "description": "Settings page title"
+  },
+  "settingsTheme": {
+    "message": "Theme",
+    "description": "Theme label"
+  },
+  "settingsThemeDark": {
+    "message": "Dark",
+    "description": "Dark theme"
+  },
+  "settingsThemeLight": {
+    "message": "Light",
+    "description": "Light theme"
+  },
+  "settingsStartup": {
+    "message": "Open on Startup",
+    "description": "Startup setting label"
+  },
+  "settingsStartupDesc": {
+    "message": "Keep Tabel Dashboard open when you start Chrome.",
+    "description": "Startup setting description"
+  },
+  "settingsData": {
+    "message": "Data",
+    "description": "Data section title"
+  },
+  "settingsTransfer": {
+    "message": "Export and Import",
+    "description": "Data transfer label"
+  },
+  "settingsTransferDesc": {
+    "message": "Back up or restore your saved data.",
+    "description": "Data transfer description"
+  },
+  "settingsExport": {
+    "message": "Export Data",
+    "description": "Export button"
+  },
+  "settingsImport": {
+    "message": "Import Data",
+    "description": "Import button"
+  },
+  "settingsSaved": {
+    "message": "Settings saved!",
+    "description": "Save confirmation"
+  },
+  "exportSuccess": {
+    "message": "Data exported successfully!",
+    "description": "Export success message"
+  },
+  "exportError": {
+    "message": "Data export failed.",
+    "description": "Export failure message"
+  },
+  "importSuccess": {
+    "message": "Data imported successfully!",
+    "description": "Import success message"
+  },
+  "importError": {
+    "message": "Error importing data.",
+    "description": "Import error message"
+  },
+  "totalTabs": {
+    "message": "Total Tabs",
+    "description": "Total tabs label"
+  },
+  "totalGroups": {
+    "message": "Groups",
+    "description": "Groups label"
+  },
+  "lockGroup": {
+    "message": "Lock Group",
+    "description": "Lock group tooltip"
+  },
+  "unlockGroup": {
+    "message": "Unlock Group",
+    "description": "Unlock group tooltip"
+  },
+  "renameGroup": {
+    "message": "Rename",
+    "description": "Rename group tooltip"
+  },
+  "collapseGroup": {
+    "message": "Collapse",
+    "description": "Collapse group tooltip"
+  },
+  "expandGroup": {
+    "message": "Expand",
+    "description": "Expand group tooltip"
+  },
+  "deleteAll": {
+    "message": "Delete All",
+    "description": "Delete all button"
+  },
+  "deleteAllDesc": {
+    "message": "Delete all saved groups and tabs.",
+    "description": "Delete all description"
+  },
+  "deleteAllSuccess": {
+    "message": "All data was deleted.",
+    "description": "Delete all success message"
+  },
+  "deleteAllError": {
+    "message": "Data deletion failed.",
+    "description": "Delete all failure message"
+  },
+  "sweepNotification": {
+    "message": "$COUNT$ tabs saved to Tabel",
+    "description": "Sweep notification",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "pendingSweepError": {
+    "message": "Some tabs were not saved. Tabel will retry automatically.",
+    "description": "Pending sweep storage error"
+  },
+  "privacyNoticeTitle": {
+    "message": "Before you use Tabel",
+    "description": "Privacy notice title"
+  },
+  "privacyNoticeIntro": {
+    "message": "Tabel needs your approval before it organizes your tabs.",
+    "description": "Privacy notice introduction"
+  },
+  "privacyNoticeData": {
+    "message": "It stores only the titles, URLs, and icons of tabs that you choose to organize.",
+    "description": "Tab data description"
+  },
+  "privacyNoticeStorage": {
+    "message": "Data stays in Chrome and can sync through your account using chrome.storage.sync.",
+    "description": "Storage and synchronization description"
+  },
+  "privacyNoticeSharing": {
+    "message": "The developer does not receive, sell, or use your data for advertising.",
+    "description": "Data non-disclosure description"
+  },
+  "privacyAccept": {
+    "message": "Accept and Continue",
+    "description": "Privacy notice acceptance button"
+  },
+  "privacyConsentError": {
+    "message": "Your choice could not be saved. Please try again.",
+    "description": "Privacy consent storage error"
+  },
+  "settingsPrivacy": {
+    "message": "Privacy",
+    "description": "Privacy settings section title"
+  },
+  "settingsBgOpacity": {
+    "message": "Card Transparency",
+    "description": "Card transparency/opacity selector label"
+  },
+  "settingsBgOpacityDesc": {
+    "message": "Adjust the transparency of groups and cards.",
+    "description": "Card transparency/opacity selector description"
+  },
+  "formatWidth": {
+    "message": "Width",
+    "description": "Format popover width label"
+  },
+  "formatColor": {
+    "message": "Color",
+    "description": "Format popover color label"
+  },
+  "formatLayoutColor": {
+    "message": "Layout and Color",
+    "description": "Group formatting tooltip"
+  },
+  "dragToReorder": {
+    "message": "Drag to reorder",
+    "description": "Reorder tooltip"
+  },
+  "colorDefault": { "message": "Default", "description": "Default color" },
+  "colorRed": { "message": "Red", "description": "Red color" },
+  "colorOrange": { "message": "Orange", "description": "Orange color" },
+  "colorYellow": { "message": "Yellow", "description": "Yellow color" },
+  "colorGreen": { "message": "Green", "description": "Green color" },
+  "colorCyan": { "message": "Cyan", "description": "Cyan color" },
+  "colorIndigo": { "message": "Indigo", "description": "Indigo color" },
+  "colorPurple": { "message": "Purple", "description": "Purple color" },
+  "colorPink": { "message": "Pink", "description": "Pink color" },
+  "syncQuotaError": {
+    "message": "Sync storage is full. Some groups may not sync across devices.",
+    "description": "Shown when chrome.storage.sync quota is exceeded"
+  }
+}

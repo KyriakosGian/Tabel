@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabel Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="icon" type="image/png" href="../icons/icon128.png">
+</head>
+<body>
+  <!-- Header -->
+  <header class="dashboard-header" id="dashboard-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <img src="../icons/icon128.png" alt="Tabel" class="header-brand__icon">
+        <span class="header-brand__name">Tabel</span>
+      </div>
+
+      <div class="search-wrapper">
+        <svg class="search-wrapper__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="search" class="search-input" id="search-input" data-i18n-placeholder="searchPlaceholder">
+      </div>
+
+      <div class="header-stats">
+        <div class="stat-item">
+          <div class="stat-item__value" id="stat-tabs">0</div>
+          <div class="stat-item__label" data-i18n="totalTabs"></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-item__value" id="stat-groups">0</div>
+          <div class="stat-item__label" data-i18n="totalGroups"></div>
+        </div>
+      </div>
+
+      <button class="header-settings-btn" id="settings-btn" data-i18n-title="settingsTitle" title="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="dashboard-main" id="dashboard-main">
+    <div id="groups-container"></div>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="empty-state" style="display: none;">
+      <svg class="empty-state__icon" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="30" width="90" height="65" rx="8" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+        <rect x="20" y="25" width="80" height="55" rx="6" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+        <rect x="25" y="20" width="70" height="45" rx="4" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+        <path d="M45 50 L55 60 L75 40" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+      </svg>
+      <h2 class="empty-state__title" data-i18n="noTabs"></h2>
+      <p class="empty-state__subtitle" data-i18n="noTabsSubtext"></p>
+    </div>
+  </main>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <div class="privacy-notice" id="privacy-notice" hidden>
+    <section class="privacy-notice__dialog" role="dialog" aria-modal="true" aria-labelledby="privacy-notice-title">
+      <img src="../icons/icon128.png" alt="Tabel" class="privacy-notice__icon">
+      <h2 id="privacy-notice-title" data-i18n="privacyNoticeTitle"></h2>
+      <p class="privacy-notice__intro" data-i18n="privacyNoticeIntro"></p>
+      <div class="privacy-notice__details">
+        <p data-i18n="privacyNoticeData"></p>
+        <p data-i18n="privacyNoticeStorage"></p>
+        <p data-i18n="privacyNoticeSharing"></p>
+      </div>
+      <button class="privacy-notice__accept" id="privacy-accept-btn" data-i18n="privacyAccept"></button>
+    </section>
+  </div>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>

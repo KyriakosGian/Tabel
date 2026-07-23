@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extName__",
+  "description": "__MSG_extDescription__",
+  "version": "1.4.0",
+  "default_locale": "el",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA37DHEBZDAlpkGb3WnDKSuT1M/hwm8cand4iFQcfR/wGHxh8xMV8n7yqfT+dF5iqS79+WKS+s5dRZkiqlz2YIOPW21ztpdWsv4aDpDRjMmjgN284+jhoLudb7bxRDF0aXCo/9avdD+3rbOcUHzDc51F1fWzR4WDZrUCmD5hA5EPbCpz7OAZcHvrhNtC2rH6ZlCMuVEGPgE3PTykvVDBzy1lUapTVtaRh3K/fSatIqMzIxNWscj0qLiYt3VayHxkwFV71hRNRWfGmyDe7nwOIShkq37e5+OlZKdrSyDff7MuDIEWgmVCqcWMNPd9zEwbxmABZr8YTf9DSSYvoFWo8HHwIDAQAB",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "__MSG_actionTitle__"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "favicon"
+  ],
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  }
+}

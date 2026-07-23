@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify tag and project
+        shell: powershell
+        run: |
+          $version = (Get-Content -Raw -Encoding UTF8 manifest.json | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag $env:GITHUB_REF_NAME does not match manifest version $version."
+          }
+          npm test
+
+      - name: Build Chrome Web Store package
+        shell: powershell
+        run: npm run build:release
+
+      - name: Create GitHub release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content -Raw -Encoding UTF8 manifest.json | ConvertFrom-Json).version
+          $archive = "dist/tabel-$version-chrome-web-store.zip"
+          $notes = "release/notes/$version.md"
+
+          if (-not (Test-Path -LiteralPath $notes)) {
+            throw "Missing release notes: $notes"
+          }
+
+          if (gh release view $env:GITHUB_REF_NAME 2>$null) {
+            gh release upload $env:GITHUB_REF_NAME $archive --clobber
+          } else {
+            gh release create $env:GITHUB_REF_NAME $archive `
+              --verify-tag `
+              --title "Tabel $version" `
+              --notes-file $notes
+          }
