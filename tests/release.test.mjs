@@ -104,6 +104,8 @@ test('release material and reproducible package builder are present', () => {
   assert.match(releaseWorkflow, /npm test/);
   assert.match(releaseWorkflow, /npm run build:release/);
   assert.match(releaseWorkflow, /gh release create/);
+  assert.match(releaseWorkflow, /gh release list/);
+  assert.doesNotMatch(releaseWorkflow, /gh release view/);
 
   const gitignore = read('.gitignore');
   assert.match(gitignore, /\*\.pem/);

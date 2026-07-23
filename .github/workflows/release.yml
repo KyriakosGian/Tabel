@@ -13,12 +13,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
+          package-manager-cache: false
 
       - name: Verify tag and project
         shell: powershell
@@ -46,7 +47,13 @@ jobs:
             throw "Missing release notes: $notes"
           }
 
-          if (gh release view $env:GITHUB_REF_NAME 2>$null) {
+          $releaseTags = @(
+            gh release list --limit 100 --json tagName |
+              ConvertFrom-Json |
+              ForEach-Object { $_.tagName }
+          )
+
+          if ($releaseTags -contains $env:GITHUB_REF_NAME) {
             gh release upload $env:GITHUB_REF_NAME $archive --clobber
           } else {
             gh release create $env:GITHUB_REF_NAME $archive `
