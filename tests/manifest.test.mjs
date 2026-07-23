@@ -18,7 +18,7 @@ test('manifest uses Manifest V3 and references existing files', () => {
 });
 
 test('localized manifest metadata respects Chrome Web Store limits', () => {
-  for (const locale of ['el', 'en']) {
+  for (const locale of ['en']) {
     const messages = JSON.parse(
       readFileSync(join(projectRoot, '_locales', locale, 'messages.json'), 'utf8')
     );

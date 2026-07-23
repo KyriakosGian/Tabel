@@ -39,10 +39,8 @@ test('HTML structure is balanced and contains no remote font dependency', () => 
   assert.doesNotMatch(read('dashboard/dashboard.css'), /fonts\.googleapis\.com/i);
 });
 
-test('locale files have matching keys and cover direct i18n references', () => {
-  const el = JSON.parse(read('_locales/el/messages.json'));
+test('English locale covers direct i18n references', () => {
   const en = JSON.parse(read('_locales/en/messages.json'));
-  assert.deepEqual(Object.keys(el).sort(), Object.keys(en).sort());
 
   const sources = [
     'manifest.json',
@@ -60,7 +58,7 @@ test('locale files have matching keys and cover direct i18n references', () => {
   for (const match of sources.matchAll(/getMessage\(['"]([^'"]+)['"]/g)) keys.add(match[1]);
   for (const match of sources.matchAll(/data-i18n(?:-placeholder|-title)?=['"]([^'"]+)['"]/g)) keys.add(match[1]);
 
-  for (const key of keys) assert.equal(key in el, true, `Missing locale key ${key}`);
+  for (const key of keys) assert.equal(key in en, true, `Missing locale key ${key}`);
 });
 
 test('manifest and package versions match', () => {

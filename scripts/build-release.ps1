@@ -52,7 +52,6 @@ try {
       'background.js',
       'dashboard/dashboard.html',
       'options/options.html',
-      '_locales/el/messages.json',
       '_locales/en/messages.json',
       'icons/icon128.png'
     )) {

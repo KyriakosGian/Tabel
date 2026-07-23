@@ -6,71 +6,33 @@
 - Privacy policy: `https://kyriakosgian.github.io/Tabel/privacy/`
 - Support: `https://kyriakosgian.github.io/Tabel/support/`
 
-## Primary language
+## Listing
 
-Greek
-
-## Category
-
-Productivity
-
-## Store listing metadata
-
-### Greek
-
-- Name: `Tabel — Διαχείριση Καρτελών`
-- Summary: `Οργανώστε τις ανοιχτές καρτέλες σε συγχρονισμένες ομάδες, εξοικονομήστε μνήμη και επαναφέρετέ τις όποτε χρειάζεται.`
-
-### English
-
-- Name: `Tabel — Tab Manager`
+- Primary language: English
+- Category: Productivity
+- Name: `Tabel: Tab Manager`
 - Summary: `Organize open tabs into synced visual groups, save memory, and restore them whenever you need.`
 
-## Greek detailed description
-
-Το Tabel οργανώνει τις ανοιχτές καρτέλες του Chrome σε καθαρές, συγχρονισμένες ομάδες.
-
-Με ένα κλικ αποθηκεύει τις μη καρφιτσωμένες καρτέλες του ενεργού παραθύρου, κλείνει τις αρχικές καρτέλες και ανοίγει το Dashboard. Από εκεί μπορείτε να αναζητήσετε, να ταξινομήσετε και να επαναφέρετε μία καρτέλα ή ολόκληρη ομάδα.
-
-Βασικές λειτουργίες:
-
-- Ομαδοποίηση ανοιχτών καρτελών
-- Αναζήτηση αποθηκευμένων σελίδων
-- Μεταφορά και ταξινόμηση ομάδων και καρτελών
-- Κλείδωμα, σύμπτυξη και μορφοποίηση ομάδων
-- Επαναφορά μίας καρτέλας ή ολόκληρης ομάδας
-- Συγχρονισμός μεταξύ εγκαταστάσεων Chrome μέσω chrome.storage.sync
-- Εισαγωγή και εξαγωγή αντιγράφων ασφαλείας JSON
-- Φωτεινό και σκοτεινό θέμα
-
-Το Tabel δεν χρησιμοποιεί λογαριασμό Tabel, διαφημίσεις, απομακρυσμένο κώδικα ή διακομιστή που ελέγχεται από τον δημιουργό.
-
-## English detailed description
+## Detailed description
 
 Tabel organizes open Chrome tabs into clean, synchronized visual groups.
 
-With one click, it saves the non-pinned tabs in the active window, closes the original tabs, and opens the Dashboard. From there, users can search, sort, and restore one tab or a complete group.
+With one click, it saves the non-pinned tabs in the active window, closes the original tabs after safe persistence, and opens the Dashboard. Users can then search, sort, and restore one tab or a complete group.
 
 Key features:
 
-- Group open tabs
-- Search saved pages
-- Drag and sort groups and tabs
-- Lock, collapse, and format groups
-- Restore one tab or a complete group
-- Sync between Chrome installations through chrome.storage.sync
-- Import and export JSON backups
-- Light and dark themes
+- Group open tabs.
+- Search saved pages.
+- Drag and sort groups and tabs.
+- Lock, collapse, and format groups.
+- Restore one tab or a complete group.
+- Sync between Chrome installations through `chrome.storage.sync`.
+- Import and export JSON backups.
+- Use light and dark themes.
 
 Tabel uses no Tabel account, advertisements, remote code, or developer-operated server.
 
 ## Single purpose
-
-Greek:
-
-Το Tabel οργανώνει τις ανοιχτές καρτέλες του χρήστη σε αποθηκευμένες ομάδες, ώστε να μπορούν να αναζητηθούν, να ταξινομηθούν, να συγχρονιστούν και να επαναφερθούν.
-
-English:
 
 Tabel organizes a user's open tabs into saved groups so they can be searched, sorted, synchronized, and restored.
 
@@ -82,7 +44,7 @@ Required only when the user clicks the Tabel action. It reads the URL, title, an
 
 ### storage
 
-Required to store settings and the crash-safe pending sweep queue in chrome.storage.local, and to synchronize saved groups through chrome.storage.sync.
+Required to store settings and the crash-safe pending sweep queue in `chrome.storage.local`, and to synchronize saved groups through `chrome.storage.sync`.
 
 ### favicon
 
@@ -96,30 +58,28 @@ All JavaScript, CSS, HTML, icons, and locale files are included in the extension
 
 ## Data usage declarations
 
-The extension handles user data even when it stays on the device. Declare:
+Declare:
 
-- Web browsing activity, specifically the URLs, page titles, and favicon URLs selected by the user through the Sweep action.
+- Web browsing activity, specifically URLs, page titles, and favicon URLs selected by the user through the Sweep action.
 - User-generated content, specifically group names created by the user.
 
 Data use:
 
-- Providing the tab organization, search, synchronization, backup, and restore features.
+- Tab organization, search, synchronization, backup, and restoration.
 - No advertising.
 - No analytics or tracking.
 - No sale of data.
 - No transfer to a developer-operated server.
 - No human access to user data.
-- Synchronization only through Google Chrome's chrome.storage.sync service.
+- Synchronization only through Google Chrome's `chrome.storage.sync` service.
 
 Certify every applicable Limited Use statement in the Privacy practices tab.
 
-## Suggested distribution
+## Distribution
 
-- Visibility: Public, after the local production tests are complete.
+- Visibility: Public.
 - Regions: All regions.
 - Mature content: No.
-
-Use Private only if trusted testers must install through the Chrome Web Store before the public launch. Private, Unlisted, and Public submissions all go through review.
 
 ## Graphic assets
 
@@ -135,18 +95,17 @@ Run:
 npm run build:release
 ```
 
-Upload the generated file from `dist/`. The generated package excludes tests, documentation, release files, and the development `key` value.
+Upload the generated ZIP from `dist/`. The package excludes tests, documentation, release files, and the development `key` value.
 
 The GitHub release workflow runs for a version tag such as `v1.4.0`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
 
-After the first upload, open Package, select View public key, and place the Web Store public key in the source manifest if the local development installation must use the same extension ID as the Store item.
+After the first Store upload, open Package, select View public key, and copy the Store public key into the source manifest only if local development must use the same extension ID.
 
-## Actions that require the publisher
+## Publisher actions
 
 1. Create or access the Chrome Web Store developer account.
 2. Enable two-step verification.
 3. Pay the one-time registration fee.
 4. Declare Trader or Non-Trader status and complete any required verification.
-5. Enable GitHub Pages from the `main` branch and the `/docs` folder of `KyriakosGian/Tabel`.
-6. Verify the published GitHub Pages URL in Google Search Console if an official publisher URL is desired.
-7. Upload the ZIP, complete the listing fields, and submit it for review.
+5. Upload the ZIP and complete the Store listing.
+6. Submit the extension for review.

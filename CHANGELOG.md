@@ -2,40 +2,39 @@
 
 ## 1.4.0, 2026-07-23
 
-- Προσθήκη ενημέρωσης και ρητής αποδοχής απορρήτου πριν από την ανάγνωση καρτελών.
-- Προετοιμασία πολιτικής απορρήτου και υλικού δημοσίευσης.
-- Διόρθωση της ελληνικής σύντομης περιγραφής σύμφωνα με το όριο του Chrome Web Store.
-- Προσθήκη δίγλωσσης one page παρουσίασης για GitHub Pages.
-- Προσθήκη αυτοματοποιημένων ελέγχων και GitHub Release μέσω GitHub Actions.
+- Added a privacy notice and explicit consent before tab collection.
+- Prepared the privacy policy and Chrome Web Store release material.
+- Added an English GitHub Pages presentation website.
+- Added automated tests and GitHub Releases through GitHub Actions.
 
 ## 1.3.0, 2026-07-19
 
-- Συγχρονισμός διαγραφών μέσω tombstones.
-- Ασφαλής, μόνιμη ουρά sweep με επιβεβαίωση αποθήκευσης.
-- Συγχρονισμός μετακινήσεων, αναδιατάξεων, εισαγωγής και διαγραφής όλων.
-- Διόρθωση HTML, μεταφράσεων και εμφάνισης έκδοσης.
-- Αφαίρεση εξωτερικών Google Fonts.
-- Επέκταση αυτοματοποιημένων tests.
+- Added deletion synchronization through tombstones.
+- Added a durable pending sweep queue with persistence confirmation.
+- Synchronized tab moves, sorting, imports, and Delete All.
+- Fixed HTML structure, localization, and version display.
+- Removed external Google Fonts.
+- Expanded automated test coverage.
 
 ## 1.2.1, 2026-07-19
 
-- Επιβεβαίωση ανοίγματος καρτελών πριν από τη διαγραφή αποθηκευμένων δεδομένων.
-- Προσθήκη αυτοματοποιημένων tests.
-- Αφαίρεση προσωρινού homepage URL και μη χρησιμοποιούμενων αρχείων.
-- Αφαίρεση νεκρού κώδικα και της περιττής άδειας `activeTab`.
+- Confirmed successful tab creation before deleting saved data.
+- Added automated tests.
+- Removed a temporary homepage URL and unused files.
+- Removed dead code and the unnecessary `activeTab` permission.
 
 ## 1.2.0, 2026-06-06
 
-- Συγχρονισμός συσκευών μέσω `chrome.storage.sync`.
-- Ασφαλέστερο merge τοπικών και απομακρυσμένων δεδομένων.
-- Διορθώσεις σε event listeners, i18n και rendering.
+- Added cross-device synchronization through `chrome.storage.sync`.
+- Improved merging of local and synchronized data.
+- Fixed event listeners, internationalization, and rendering.
 
 ## 1.1.0, 2026-05-22
 
-- Φωτεινό θέμα και ρύθμιση διαφάνειας.
-- Βελτιωμένο drag and drop.
-- Προαιρετικό άνοιγμα του dashboard κατά την εκκίνηση.
+- Added a light theme and transparency setting.
+- Improved drag and drop.
+- Added an optional dashboard launch on browser startup.
 
 ## 1.0.0, 2026-05-21
 
-- Αρχική έκδοση.
+- Initial release.

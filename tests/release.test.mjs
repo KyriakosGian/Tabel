@@ -10,10 +10,7 @@ const read = path => readFileSync(join(projectRoot, path), 'utf8');
 const sitePages = [
   'docs/index.html',
   'docs/privacy/index.html',
-  'docs/support/index.html',
-  'docs/en/index.html',
-  'docs/en/privacy/index.html',
-  'docs/en/support/index.html'
+  'docs/support/index.html'
 ];
 
 function pngSize(path) {
@@ -43,20 +40,36 @@ test('GitHub Pages links and local assets resolve', () => {
   }
 });
 
-test('GitHub Pages homepages provide a complete one-page presentation', () => {
-  for (const page of ['docs/index.html', 'docs/en/index.html']) {
-    const html = read(page);
-    assert.match(html, /id="features"/);
-    assert.match(html, /id="how-it-works"/);
-    assert.match(html, /id="faq"/);
-    assert.match(html, /dashboard-preview\.png/);
-    assert.match(
-      html,
-      /<meta property="og:image" content="https:\/\/kyriakosgian\.github\.io\/Tabel\/assets\/og\.png">/
-    );
-    assert.match(html, /href="privacy\/"/);
-    assert.match(html, /href="support\/"/);
+test('public project copy and extension interface are English only', () => {
+  const manifest = JSON.parse(read('manifest.json'));
+  assert.equal(manifest.default_locale, 'en');
+  assert.equal(existsSync(join(projectRoot, '_locales/el')), false);
+  assert.equal(existsSync(join(projectRoot, 'docs/en')), false);
+
+  for (const file of [
+    ...sitePages,
+    'README.md',
+    'CHANGELOG.md',
+    'release/CHROME_WEB_STORE.md',
+    'release/notes/1.4.0.md',
+    '_locales/en/messages.json'
+  ]) {
+    assert.doesNotMatch(read(file), /[\u0370-\u03ff]/i, `${file} contains Greek text`);
   }
+});
+
+test('GitHub Pages homepage provides a complete one-page presentation', () => {
+  const html = read('docs/index.html');
+  assert.match(html, /id="features"/);
+  assert.match(html, /id="how-it-works"/);
+  assert.match(html, /id="faq"/);
+  assert.match(html, /dashboard-preview\.png/);
+  assert.match(
+    html,
+    /<meta property="og:image" content="https:\/\/kyriakosgian\.github\.io\/Tabel\/assets\/og\.png">/
+  );
+  assert.match(html, /href="privacy\/"/);
+  assert.match(html, /href="support\/"/);
 
   const socialCard = pngSize('docs/assets/og.png');
   assert.ok(socialCard.width >= 1200);
@@ -65,13 +78,11 @@ test('GitHub Pages homepages provide a complete one-page presentation', () => {
 });
 
 test('privacy policies disclose storage, synchronization, and Limited Use', () => {
-  for (const page of ['docs/privacy/index.html', 'docs/en/privacy/index.html']) {
-    const html = read(page);
-    assert.match(html, /chrome\.storage\.local/);
-    assert.match(html, /chrome\.storage\.sync/);
-    assert.match(html, /Limited Use/i);
-    assert.match(html, /(?:22 Ιουλίου 2026|July 22, 2026)/);
-  }
+  const html = read('docs/privacy/index.html');
+  assert.match(html, /chrome\.storage\.local/);
+  assert.match(html, /chrome\.storage\.sync/);
+  assert.match(html, /Limited Use/i);
+  assert.match(html, /July 22, 2026/);
 });
 
 test('Chrome Web Store graphics have exact required dimensions', () => {
@@ -105,6 +116,7 @@ test('release material and reproducible package builder are present', () => {
   assert.match(releaseWorkflow, /npm run build:release/);
   assert.match(releaseWorkflow, /gh release create/);
   assert.match(releaseWorkflow, /gh release list/);
+  assert.match(releaseWorkflow, /gh release edit/);
   assert.doesNotMatch(releaseWorkflow, /gh release view/);
 
   const gitignore = read('.gitignore');

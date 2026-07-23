@@ -54,6 +54,9 @@ jobs:
           )
 
           if ($releaseTags -contains $env:GITHUB_REF_NAME) {
+            gh release edit $env:GITHUB_REF_NAME `
+              --title "Tabel $version" `
+              --notes-file $notes
             gh release upload $env:GITHUB_REF_NAME $archive --clobber
           } else {
             gh release create $env:GITHUB_REF_NAME $archive `

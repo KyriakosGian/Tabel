@@ -1,50 +1,48 @@
 # Tabel
 
-Chrome extension για αποθήκευση και οργάνωση ανοιχτών καρτελών σε ομάδες.
+Tabel is a Chrome extension that saves and organizes open tabs into visual groups.
 
-Έκδοση 1.4.0, Manifest V3, ελληνικό και αγγλικό περιβάλλον.
+Version 1.4.0. Manifest V3. English interface.
 
-[Επίσημη σελίδα](https://kyriakosgian.github.io/Tabel/) · [Αναφορά προβλήματος](https://github.com/KyriakosGian/Tabel/issues) · [Εκδόσεις](https://github.com/KyriakosGian/Tabel/releases)
+[Official website](https://kyriakosgian.github.io/Tabel/) | [Report a problem](https://github.com/KyriakosGian/Tabel/issues) | [Releases](https://github.com/KyriakosGian/Tabel/releases)
 
 ![Tabel Dashboard](release/assets/screenshot-dashboard-1280x800.png)
 
-## Λειτουργίες
+## Features
 
-- Αποθήκευση των μη καρφιτσωμένων καρτελών του ενεργού παραθύρου.
-- Επαναφορά μίας καρτέλας ή ολόκληρης ομάδας.
-- Αναζήτηση, μετονομασία, διαγραφή και drag and drop.
-- Επιλογή εμφάνισης ομάδων και φωτεινού ή σκοτεινού θέματος.
-- Συγχρονισμός συσκευών μέσω `chrome.storage.sync`.
-- Εισαγωγή και εξαγωγή δεδομένων σε JSON.
-- Ελληνικό και αγγλικό περιβάλλον.
+- Save non-pinned tabs from the active window.
+- Restore one tab or a complete group.
+- Search, rename, delete, sort, and move groups and tabs.
+- Customize group layout and use a light or dark theme.
+- Sync saved groups through `chrome.storage.sync`.
+- Import and export JSON backups.
 
-## Εγκατάσταση
+## Local installation
 
-1. Άνοιξε το `chrome://extensions/` στον Chrome.
-2. Ενεργοποίησε το Developer mode.
-3. Επίλεξε Load unpacked.
-4. Επίλεξε τον βασικό φάκελο του project.
+1. Open `chrome://extensions/` in Chrome.
+2. Enable Developer mode.
+3. Select Load unpacked.
+4. Select the project root directory.
 
 ## Tests
 
-Απαιτείται Node.js 22 ή νεότερο.
+Node.js 22 or later is required.
 
 ```bash
 npm test
 ```
 
-Τα tests χρησιμοποιούν το ενσωματωμένο `node:test` και δεν χρειάζονται πρόσθετα πακέτα.
+The test suite uses the built-in `node:test` runner and requires no third-party packages.
 
-## Δημόσια διάθεση
+## Public release
 
-- Το `docs/` περιέχει τη δίγλωσση one page παρουσίαση για GitHub Pages.
-- Οι σελίδες απορρήτου και υποστήριξης βρίσκονται επίσης στο `docs/`.
-- Το `release/` περιέχει τα κείμενα και τα γραφικά του Chrome Web Store.
-- Η εντολή `npm run build:release` δημιουργεί καθαρό ZIP στον φάκελο `dist/`.
-- Το GitHub Actions εκτελεί τα tests σε κάθε push και pull request.
-- Ένα tag της μορφής `v1.4.0` δημιουργεί αυτόματα GitHub Release με το ZIP του Chrome Web Store.
+- `docs/` contains the GitHub Pages website, privacy policy, and support page.
+- `release/` contains the Chrome Web Store copy and graphic assets.
+- `npm run build:release` creates a clean Chrome Web Store ZIP in `dist/`.
+- GitHub Actions runs the test suite for every push and pull request.
+- A version tag such as `v1.4.0` creates a GitHub Release and attaches the Store ZIP.
 
-## Δημιουργία έκδοσης
+## Create a release
 
 ```bash
 npm test
@@ -53,30 +51,30 @@ git tag v1.4.0
 git push origin v1.4.0
 ```
 
-Το tag πρέπει να συμφωνεί με την έκδοση των `manifest.json` και `package.json`.
+The tag must match the versions in `manifest.json` and `package.json`.
 
-## Δομή
+## Project structure
 
 ```text
-Tabel-app/
-├── background.js
-├── manifest.json
-├── dashboard/
-├── options/
-├── icons/
-├── _locales/
-├── docs/
-├── release/
-├── scripts/
-└── tests/
+Tabel/
+|-- background.js
+|-- manifest.json
+|-- dashboard/
+|-- options/
+|-- icons/
+|-- _locales/
+|-- docs/
+|-- release/
+|-- scripts/
+`-- tests/
 ```
 
-## Αποθήκευση δεδομένων
+## Data storage
 
-- IndexedDB για ομάδες και καρτέλες.
-- `chrome.storage.local` για ρυθμίσεις, αποδοχή απορρήτου και την ασφαλή ουρά sweep.
-- `chrome.storage.sync` για συγχρονισμό συσκευών.
+- IndexedDB stores groups and tabs.
+- `chrome.storage.local` stores settings, privacy consent, and the crash-safe pending sweep queue.
+- `chrome.storage.sync` synchronizes saved groups between Chrome installations.
 
-## Άδεια
+## License
 
-MIT. Δες το αρχείο `LICENSE`.
+Tabel is released under the [MIT License](LICENSE).
