@@ -6,6 +6,14 @@
   "engines": {
     "node": ">=22"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KyriakosGian/Tabel.git"
+  },
+  "homepage": "https://kyriakosgian.github.io/Tabel/",
+  "bugs": {
+    "url": "https://github.com/KyriakosGian/Tabel/issues"
+  },
   "scripts": {
     "test": "node --test",
     "build:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-release.ps1"

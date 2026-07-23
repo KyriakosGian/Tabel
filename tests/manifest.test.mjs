@@ -27,10 +27,11 @@ test('localized manifest metadata respects Chrome Web Store limits', () => {
   }
 });
 
-test('manifest and README contain no placeholder repository URL', () => {
-  assert.equal('homepage_url' in manifest, false);
+test('manifest and README use the final public project URLs', () => {
+  assert.equal(manifest.homepage_url, 'https://kyriakosgian.github.io/Tabel/');
 
   const readme = readFileSync(join(projectRoot, 'README.md'), 'utf8');
-  assert.doesNotMatch(readme, /github\.com\/yourusername/i);
+  assert.match(readme, /github\.com\/KyriakosGian\/Tabel/);
+  assert.doesNotMatch(readme, /GITHUB_USER|REPOSITORY|yourusername/i);
   assert.equal(manifest.permissions.includes('activeTab'), false);
 });

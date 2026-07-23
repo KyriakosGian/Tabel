@@ -50,7 +50,10 @@ test('GitHub Pages homepages provide a complete one-page presentation', () => {
     assert.match(html, /id="how-it-works"/);
     assert.match(html, /id="faq"/);
     assert.match(html, /dashboard-preview\.png/);
-    assert.match(html, /<meta property="og:image" content="[^"]*og\.png">/);
+    assert.match(
+      html,
+      /<meta property="og:image" content="https:\/\/kyriakosgian\.github\.io\/Tabel\/assets\/og\.png">/
+    );
     assert.match(html, /href="privacy\/"/);
     assert.match(html, /href="support\/"/);
   }
@@ -91,6 +94,7 @@ test('release material and reproducible package builder are present', () => {
   assert.equal(existsSync(join(projectRoot, 'scripts/build-release.ps1')), true);
   assert.equal(existsSync(join(projectRoot, '.github/workflows/ci.yml')), true);
   assert.equal(existsSync(join(projectRoot, '.github/workflows/release.yml')), true);
+  assert.equal(existsSync(join(projectRoot, '.github/ISSUE_TEMPLATE/bug_report.yml')), true);
 
   const buildScript = read('scripts/build-release.ps1');
   assert.match(buildScript, /Properties\.Remove\('key'\)/);

@@ -4,6 +4,8 @@ Chrome extension για αποθήκευση και οργάνωση ανοιχ�
 
 Έκδοση 1.4.0, Manifest V3, ελληνικό και αγγλικό περιβάλλον.
 
+[Επίσημη σελίδα](https://kyriakosgian.github.io/Tabel/) · [Αναφορά προβλήματος](https://github.com/KyriakosGian/Tabel/issues) · [Εκδόσεις](https://github.com/KyriakosGian/Tabel/releases)
+
 ![Tabel Dashboard](release/assets/screenshot-dashboard-1280x800.png)
 
 ## Λειτουργίες

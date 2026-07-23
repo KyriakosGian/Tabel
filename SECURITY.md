@@ -6,7 +6,7 @@ Security fixes are provided for the latest published version of Tabel.
 
 ## Reporting a vulnerability
 
-Use GitHub private vulnerability reporting from the repository Security tab. Do not include private URLs, exported Tabel data, credentials, or personal information in a public issue.
+Use [GitHub private vulnerability reporting](https://github.com/KyriakosGian/Tabel/security/advisories/new). Do not include private URLs, exported Tabel data, credentials, or personal information in a public issue.
 
 Include:
 

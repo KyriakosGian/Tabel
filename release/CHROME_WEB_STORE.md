@@ -1,12 +1,10 @@
 # Tabel 1.4.0, Chrome Web Store release material
 
-## URLs to enter after GitHub Pages is enabled
+## URLs
 
-Replace `GITHUB_USER` and `REPOSITORY` with the final values.
-
-- Homepage: `https://GITHUB_USER.github.io/REPOSITORY/`
-- Privacy policy: `https://GITHUB_USER.github.io/REPOSITORY/privacy/`
-- Support: `https://GITHUB_USER.github.io/REPOSITORY/support/`
+- Homepage: `https://kyriakosgian.github.io/Tabel/`
+- Privacy policy: `https://kyriakosgian.github.io/Tabel/privacy/`
+- Support: `https://kyriakosgian.github.io/Tabel/support/`
 
 ## Primary language
 
@@ -149,6 +147,6 @@ After the first upload, open Package, select View public key, and place the Web 
 2. Enable two-step verification.
 3. Pay the one-time registration fee.
 4. Declare Trader or Non-Trader status and complete any required verification.
-5. Enable GitHub Pages from the repository `docs` folder.
+5. Enable GitHub Pages from the `main` branch and the `/docs` folder of `KyriakosGian/Tabel`.
 6. Verify the published GitHub Pages URL in Google Search Console if an official publisher URL is desired.
 7. Upload the ZIP, complete the listing fields, and submit it for review.
