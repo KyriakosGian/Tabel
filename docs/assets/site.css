@@ -332,8 +332,12 @@ h1 {
 
 .final-cta p {
   max-width: 650px;
-  margin: 0 auto 22px;
+  margin: 0 auto;
   color: var(--muted);
+}
+
+.final-cta .hero__actions {
+  margin-top: 22px;
 }
 
 .privacy-band h2,
