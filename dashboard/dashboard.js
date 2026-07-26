@@ -104,7 +104,7 @@ class Dashboard {
       const msg = chrome.i18n.getMessage(key);
       if (msg) el.title = msg;
     });
-    document.documentElement.lang = chrome.i18n.getUILanguage().startsWith('el') ? 'el' : 'en';
+    document.documentElement.lang = 'en';
     document.title = chrome.i18n.getMessage('dashboardTitle') || 'Tabel Dashboard';
   }
 
@@ -130,6 +130,8 @@ class Dashboard {
     } else {
       document.documentElement.classList.remove('theme-light');
     }
+
+    document.documentElement.classList.toggle('hide-tab-urls', settings.showTabUrls === false);
 
     // Custom opacity
     if (settings.customCardOpacity !== undefined) {

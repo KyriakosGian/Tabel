@@ -786,6 +786,10 @@ body::before {
   text-overflow: ellipsis;
 }
 
+.hide-tab-urls .tab-item__domain {
+  display: none;
+}
+
 .tab-item__actions {
   display: flex;
   align-items: center;

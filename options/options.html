@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="el">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -325,6 +325,17 @@
           <input type="range" id="setting-bg-opacity" min="10" max="100" value="75" style="flex: 1; accent-color: var(--accent);">
           <span id="bg-opacity-val" style="font-size: 13px; color: var(--text-secondary); width: 32px; text-align: right;">75%</span>
         </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-show-tab-urls" data-i18n="settingsShowTabUrls">Show tab URLs</label>
+          <p data-i18n="settingsShowTabUrlsDesc">Show the full link below each saved tab title. Turn this off for a more compact layout.</p>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="setting-show-tab-urls">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
     </div>
 

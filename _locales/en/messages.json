@@ -224,6 +224,14 @@
     "message": "Adjust the transparency of groups and cards.",
     "description": "Card transparency/opacity selector description"
   },
+  "settingsShowTabUrls": {
+    "message": "Show tab URLs",
+    "description": "Tab URL visibility setting label"
+  },
+  "settingsShowTabUrlsDesc": {
+    "message": "Show the full link below each saved tab title. Turn this off for a more compact layout.",
+    "description": "Tab URL visibility setting description"
+  },
   "formatWidth": {
     "message": "Width",
     "description": "Format popover width label"

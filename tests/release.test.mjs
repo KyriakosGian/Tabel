@@ -51,7 +51,7 @@ test('public project copy and extension interface are English only', () => {
     'README.md',
     'CHANGELOG.md',
     'release/CHROME_WEB_STORE.md',
-    'release/notes/1.4.0.md',
+    `release/notes/${manifest.version}.md`,
     '_locales/en/messages.json'
   ]) {
     assert.doesNotMatch(read(file), /[\u0370-\u03ff]/i, `${file} contains Greek text`);

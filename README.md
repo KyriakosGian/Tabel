@@ -2,7 +2,7 @@
 
 Tabel is a Chrome extension that saves and organizes open tabs into visual groups.
 
-Version 1.4.0. Manifest V3. English interface.
+Version 1.5.0. Manifest V3. English interface.
 
 [Official website](https://kyriakosgian.github.io/Tabel/) | [Report a problem](https://github.com/KyriakosGian/Tabel/issues) | [Releases](https://github.com/KyriakosGian/Tabel/releases)
 
@@ -13,6 +13,7 @@ Version 1.4.0. Manifest V3. English interface.
 - Save non-pinned tabs from the active window.
 - Restore one tab or a complete group.
 - Search, rename, delete, sort, and move groups and tabs.
+- Show complete tab URLs or hide them for a compact layout.
 - Customize group layout and use a light or dark theme.
 - Sync saved groups through `chrome.storage.sync`.
 - Import and export JSON backups.
@@ -40,15 +41,15 @@ The test suite uses the built-in `node:test` runner and requires no third-party 
 - `release/` contains the Chrome Web Store copy and graphic assets.
 - `npm run build:release` creates a clean Chrome Web Store ZIP in `dist/`.
 - GitHub Actions runs the test suite for every push and pull request.
-- A version tag such as `v1.4.0` creates a GitHub Release and attaches the Store ZIP.
+- A version tag such as `v1.5.0` creates a GitHub Release and attaches the Store ZIP.
 
 ## Create a release
 
 ```bash
 npm test
 npm run build:release
-git tag v1.4.0
-git push origin v1.4.0
+git tag v1.5.0
+git push origin v1.5.0
 ```
 
 The tag must match the versions in `manifest.json` and `package.json`.

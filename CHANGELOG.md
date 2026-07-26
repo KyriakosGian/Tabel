@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0, 2026-07-26
+
+- Added a setting to show or hide tab URLs for a more compact Dashboard.
+- Replaced the domain-only secondary line with the complete saved URL.
+- Kept the extension interface and document language set to English.
+
 ## 1.4.0, 2026-07-23
 
 - Added a privacy notice and explicit consent before tab collection.

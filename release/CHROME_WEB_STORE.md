@@ -1,4 +1,4 @@
-# Tabel 1.4.0, Chrome Web Store release material
+# Tabel 1.5.0, Chrome Web Store release material
 
 ## URLs
 
@@ -23,6 +23,7 @@ Key features:
 
 - Group open tabs.
 - Search saved pages.
+- Show complete saved URLs or hide them for a compact layout.
 - Drag and sort groups and tabs.
 - Lock, collapse, and format groups.
 - Restore one tab or a complete group.
@@ -97,7 +98,7 @@ npm run build:release
 
 Upload the generated ZIP from `dist/`. The package excludes tests, documentation, release files, and the development `key` value.
 
-The GitHub release workflow runs for a version tag such as `v1.4.0`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
+The GitHub release workflow runs for a version tag such as `v1.5.0`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
 
 After the first Store upload, open Package, select View public key, and copy the Store public key into the source manifest only if local development must use the same extension ID.
 

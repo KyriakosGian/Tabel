@@ -12,7 +12,8 @@ class OptionsController {
     this.settings = {
       theme: 'dark',
       keepOpenOnStartup: true,
-      customCardOpacity: 75
+      customCardOpacity: 75,
+      showTabUrls: true
     };
     this.sync = new SyncManager();
     this._init();
@@ -31,7 +32,7 @@ class OptionsController {
       const msg = chrome.i18n.getMessage(key);
       if (msg) el.textContent = msg;
     });
-    document.documentElement.lang = chrome.i18n.getUILanguage().startsWith('el') ? 'el' : 'en';
+    document.documentElement.lang = 'en';
     document.title = chrome.i18n.getMessage('settingsTitle') || 'Tabel Settings';
     document.getElementById('app-version').textContent = `Tabel v${chrome.runtime.getManifest().version}`;
   }
@@ -46,6 +47,7 @@ class OptionsController {
     // Apply to UI
     document.getElementById('setting-theme').value = this.settings.theme;
     document.getElementById('setting-startup').checked = this.settings.keepOpenOnStartup ?? true;
+    document.getElementById('setting-show-tab-urls').checked = this.settings.showTabUrls ?? true;
 
     // Custom Appearance UI
     document.getElementById('setting-bg-opacity').value = this.settings.customCardOpacity ?? 75;
@@ -106,6 +108,11 @@ class OptionsController {
     // Startup toggle
     document.getElementById('setting-startup').addEventListener('change', (e) => {
       this.settings.keepOpenOnStartup = e.target.checked;
+      this._saveSettings();
+    });
+
+    document.getElementById('setting-show-tab-urls').addEventListener('change', (e) => {
+      this.settings.showTabUrls = e.target.checked;
       this._saveSettings();
     });
 

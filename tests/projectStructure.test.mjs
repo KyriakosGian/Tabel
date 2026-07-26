@@ -77,6 +77,22 @@ test('data management requests immediate sync and dashboard refresh', () => {
   assert.match(dashboardSource, /msg\.type === 'DATA_CHANGED'/);
 });
 
+test('tab URL visibility setting shows full links and supports compact mode', () => {
+  const optionsHtml = read('options/options.html');
+  const optionsSource = read('options/options.js');
+  const dashboardSource = read('dashboard/dashboard.js');
+  const dashboardCss = read('dashboard/dashboard.css');
+  const tabItemSource = read('dashboard/components/TabItem.js');
+
+  assert.match(optionsHtml, /id="setting-show-tab-urls"/);
+  assert.match(optionsSource, /showTabUrls: true/);
+  assert.match(optionsSource, /this\.settings\.showTabUrls = e\.target\.checked/);
+  assert.match(dashboardSource, /classList\.toggle\('hide-tab-urls', settings\.showTabUrls === false\)/);
+  assert.match(dashboardCss, /\.hide-tab-urls \.tab-item__domain\s*\{\s*display: none;/);
+  assert.match(tabItemSource, /tab-item__domain[^]*this\._escapeHtml\(this\.data\.url\)/);
+  assert.doesNotMatch(tabItemSource, /\.hostname/);
+});
+
 test('privacy consent is required before tab collection', () => {
   const backgroundSource = read('background.js');
   const dashboardSource = read('dashboard/dashboard.js');

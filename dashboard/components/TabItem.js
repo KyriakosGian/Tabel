@@ -1,6 +1,6 @@
 /**
  * Tabel - TabItem Component
- * Renders an individual saved tab with favicon, title, and actions.
+ * Renders an individual saved tab with favicon, title, URL, and actions.
  */
 
 export class TabItem {
@@ -21,14 +21,6 @@ export class TabItem {
     el.dataset.tabId = this.data.id;
     el.dataset.groupId = this.data.groupId;
     el.draggable = true;
-
-    // Extract domain from URL for display
-    let domain = '';
-    try {
-      domain = new URL(this.data.url).hostname;
-    } catch (e) {
-      domain = this.data.url;
-    }
 
     // Favicon URL - use Chrome's favicon service
     const faviconUrl = this.data.favIconUrl ||
@@ -53,7 +45,7 @@ export class TabItem {
            loading="lazy">
       <a class="tab-item__content" href="${this._escapeHtml(this.data.url)}" target="_blank" rel="noopener noreferrer" title="${this._escapeHtml(this.data.url)}">
         <span class="tab-item__title">${this._escapeHtml(this.data.title)}</span>
-        <span class="tab-item__domain">${this._escapeHtml(domain)}</span>
+        <span class="tab-item__domain" title="${this._escapeHtml(this.data.url)}">${this._escapeHtml(this.data.url)}</span>
       </a>
       <div class="tab-item__actions">
         <button class="tab-item__btn tab-item__btn--restore" title="${chrome.i18n.getMessage('restoreTab')}" data-action="restore">
@@ -175,8 +167,11 @@ export class TabItem {
 
   /** Escape HTML entities */
   _escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return String(str ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 }
