@@ -68,6 +68,7 @@ test('GitHub Pages homepage provides a complete one-page presentation', () => {
   assert.match(html, /id="installation"/);
   assert.match(html, /id="faq"/);
   assert.match(html, /dashboard-preview\.png/);
+  assert.match(html, /settings-preview\.png/);
   assert.ok(html.includes(`Version ${version}`));
   assert.ok(html.includes(downloadUrl));
   assert.match(html, /chrome:\/\/extensions\//);
@@ -101,6 +102,10 @@ test('Chrome Web Store graphics have exact required dimensions', () => {
   assert.deepEqual(pngSize('release/assets/store-icon-128.png'), { width: 128, height: 128 });
   assert.deepEqual(
     pngSize('release/assets/screenshot-dashboard-1280x800.png'),
+    { width: 1280, height: 800 }
+  );
+  assert.deepEqual(
+    pngSize('docs/assets/settings-preview.png'),
     { width: 1280, height: 800 }
   );
   assert.deepEqual(

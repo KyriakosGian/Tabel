@@ -8,6 +8,8 @@ Version 1.6.0. Manifest V3. English interface.
 
 ![Tabel Dashboard](release/assets/screenshot-dashboard-1280x800.png)
 
+![Tabel Settings](docs/assets/settings-preview.png)
+
 ## Features
 
 - Save non-pinned tabs from the active window.
