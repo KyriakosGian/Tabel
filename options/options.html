@@ -5,293 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tabel Settings</title>
   <link rel="icon" type="image/png" href="../icons/icon128.png">
-  <style>
-    :root {
-      --bg-primary: #121625;
-      --bg-secondary: #1a2035;
-      --bg-card: rgba(26, 32, 53, var(--custom-card-opacity, 0.75));
-      --glass-border: rgba(100, 120, 180, 0.12);
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-tertiary: #64748b;
-      --accent: #6366f1;
-      --accent-light: #818cf8;
-      --accent-glow: rgba(99, 102, 241, 0.25);
-      --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef);
-      --success: #34d399;
-      --danger: #f87171;
-      --radius: 12px;
-      --radius-sm: 8px;
-      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-
-    .theme-light {
-      --bg-primary: #f8fafc;
-      --bg-secondary: #ffffff;
-      --bg-card: rgba(255, 255, 255, var(--custom-card-opacity, 0.75));
-      --glass-border: rgba(99, 102, 241, 0.08);
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
-      --text-tertiary: #64748b;
-      --accent-glow: rgba(99, 102, 241, 0.1);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { -webkit-font-smoothing: antialiased; }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      padding-bottom: 48px;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: radial-gradient(ellipse at 30% 30%, rgba(99,102,241,0.06) 0%, transparent 50%),
-                  radial-gradient(ellipse at 70% 70%, rgba(139,92,246,0.04) 0%, transparent 50%);
-      z-index: -1;
-    }
-
-    /* Header styles matching dashboard */
-    .dashboard-header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(18, 22, 37, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--glass-border);
-      padding: 14px 24px;
-      margin-bottom: 40px;
-    }
-
-    .theme-light .dashboard-header {
-      background: rgba(255, 255, 255, 0.85);
-    }
-
-    .header-inner {
-      max-width: 600px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .header-brand__icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-    }
-
-    .header-brand__name {
-      font-size: 20px;
-      font-weight: 700;
-      background: var(--accent-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -0.5px;
-    }
-
-    .settings-container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 0 24px;
-      animation: fadeIn 0.4s ease-out;
-    }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-
-    .settings-section {
-      background: var(--bg-card);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 20px;
-      backdrop-filter: blur(10px);
-    }
-
-    .settings-section h2 {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--text-tertiary);
-      margin-bottom: 20px;
-    }
-
-    .setting-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(100,120,180,0.06);
-    }
-
-    .setting-row:last-child { border-bottom: none; }
-
-    .setting-info { flex: 1; }
-
-    .setting-info label {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text-primary);
-      display: block;
-      cursor: pointer;
-    }
-
-    .setting-info p {
-      font-size: 13px;
-      color: var(--text-tertiary);
-      margin-top: 3px;
-    }
-
-    /* Toggle switch */
-    .toggle {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      flex-shrink: 0;
-    }
-
-    .toggle input { opacity: 0; width: 0; height: 0; }
-
-    .toggle-slider {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #374151;
-      border-radius: 24px;
-      cursor: pointer;
-      transition: background 0.25s;
-    }
-
-    .toggle-slider::after {
-      content: '';
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 18px; height: 18px;
-      background: white;
-      border-radius: 50%;
-      transition: transform 0.25s;
-    }
-
-    .toggle input:checked + .toggle-slider {
-      background: var(--accent);
-    }
-
-    .toggle input:checked + .toggle-slider::after {
-      transform: translateX(20px);
-    }
-
-    /* Select */
-    .setting-select {
-      background: var(--bg-secondary);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: var(--font);
-      font-size: 14px;
-      padding: 8px 32px 8px 12px;
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .setting-select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
-
-    /* Buttons */
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 500;
-      padding: 10px 20px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 1px solid var(--glass-border);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-    }
-
-    .btn:hover {
-      border-color: var(--accent);
-      background: var(--accent-glow);
-    }
-
-    .btn--danger {
-      border-color: rgba(248,113,113,0.3);
-      color: var(--danger);
-    }
-
-    .btn--danger:hover {
-      background: rgba(248,113,113,0.1);
-      border-color: var(--danger);
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 24px; right: 24px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--glass-border);
-      border-left: 3px solid var(--success);
-      border-radius: var(--radius);
-      padding: 12px 20px;
-      color: var(--text-primary);
-      font-size: 14px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-      z-index: 1000;
-      animation: toastIn 0.3s ease-out;
-    }
-
-    .toast--error { border-left-color: var(--danger); }
-
-    @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    .settings-footer {
-      text-align: center;
-      margin-top: 40px;
-      color: var(--text-tertiary);
-      font-size: 13px;
-    }
-
-    .settings-footer a {
-      color: var(--accent-light);
-      text-decoration: none;
-    }
-
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
-
-    ::selection { background: var(--accent); color: white; }
-  </style>
+  <link rel="stylesheet" href="../styles/tabel.css">
+  <link rel="stylesheet" href="options.css">
 </head>
-<body>
+<body class="settings-page">
   <!-- Header -->
   <header class="dashboard-header">
     <div class="header-inner">
@@ -305,14 +22,51 @@
   <div class="settings-container">
     <!-- Appearance -->
     <div class="settings-section">
-      <h2 data-i18n="settingsTheme">Theme</h2>
+      <h2 data-i18n="settingsAppearance">Appearance</h2>
       <div class="setting-row">
         <div class="setting-info">
-          <label data-i18n="settingsTheme">Theme</label>
+          <label for="setting-theme" data-i18n="settingsTheme">Theme</label>
         </div>
         <select class="setting-select" id="setting-theme">
+          <option value="system" data-i18n="settingsThemeSystem">System</option>
           <option value="dark" data-i18n="settingsThemeDark">Dark</option>
           <option value="light" data-i18n="settingsThemeLight">Light</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-density" data-i18n="settingsDensity">Density</label>
+          <p data-i18n="settingsDensityDesc">Control the spacing between groups and saved tabs.</p>
+        </div>
+        <select class="setting-select" id="setting-density">
+          <option value="comfortable" data-i18n="settingsDensityComfortable">Comfortable</option>
+          <option value="compact" data-i18n="settingsDensityCompact">Compact</option>
+          <option value="ultraCompact" data-i18n="settingsDensityUltraCompact">Ultra Compact</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-default-group-width" data-i18n="settingsDefaultGroupWidth">Default group width</label>
+          <p data-i18n="settingsDefaultGroupWidthDesc">Set the width used when a new group is created.</p>
+        </div>
+        <select class="setting-select" id="setting-default-group-width">
+          <option value="33">33%</option>
+          <option value="50" selected>50%</option>
+          <option value="100">100%</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-tab-url-mode" data-i18n="settingsTabUrlMode">Tab URL</label>
+          <p data-i18n="settingsTabUrlModeDesc">Hide URLs or show only the domain or full address.</p>
+        </div>
+        <select class="setting-select" id="setting-tab-url-mode">
+          <option value="hidden" data-i18n="settingsTabUrlHidden">Hidden</option>
+          <option value="domain" data-i18n="settingsTabUrlDomain">Domain</option>
+          <option value="full" data-i18n="settingsTabUrlFull">Full</option>
         </select>
       </div>
 
@@ -321,21 +75,51 @@
           <label data-i18n="settingsBgOpacity">Card Transparency</label>
           <p data-i18n="settingsBgOpacityDesc">Adjust the transparency of groups and cards.</p>
         </div>
-        <div style="display: flex; gap: 12px; align-items: center; width: 180px;">
-          <input type="range" id="setting-bg-opacity" min="10" max="100" value="75" style="flex: 1; accent-color: var(--accent);">
-          <span id="bg-opacity-val" style="font-size: 13px; color: var(--text-secondary); width: 32px; text-align: right;">75%</span>
+        <div class="range-control">
+          <input class="setting-range" type="range" id="setting-bg-opacity" min="10" max="100" value="75">
+          <span class="range-value" id="bg-opacity-val">75%</span>
         </div>
       </div>
 
       <div class="setting-row">
         <div class="setting-info">
-          <label for="setting-show-tab-urls" data-i18n="settingsShowTabUrls">Show tab URLs</label>
-          <p data-i18n="settingsShowTabUrlsDesc">Show the full link below each saved tab title. Turn this off for a more compact layout.</p>
+          <label for="setting-font-scale" data-i18n="settingsFontSize">Font size</label>
+          <p data-i18n="settingsFontSizeDesc">Adjust text size throughout Tabel.</p>
         </div>
-        <label class="toggle">
-          <input type="checkbox" id="setting-show-tab-urls">
-          <span class="toggle-slider"></span>
-        </label>
+        <div class="range-control">
+          <input class="setting-range" type="range" id="setting-font-scale" min="85" max="125" step="5" value="100">
+          <span class="range-value" id="font-scale-val">100%</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-favicon-size" data-i18n="settingsFaviconSize">Favicon size</label>
+          <p data-i18n="settingsFaviconSizeDesc">Adjust favicon size in saved tab rows.</p>
+        </div>
+        <div class="range-control">
+          <input class="setting-range" type="range" id="setting-favicon-size" min="12" max="28" step="2" value="16">
+          <span class="range-value" id="favicon-size-val">16 px</span>
+        </div>
+      </div>
+
+      <div class="appearance-preview" id="appearance-preview" data-density="comfortable" data-tab-url-mode="hidden" aria-live="polite">
+        <div class="appearance-preview__label" data-i18n="settingsAppearancePreview">Preview</div>
+        <div class="appearance-preview__group">
+          <div class="appearance-preview__group-title" data-i18n="settingsPreviewGroup">Example group</div>
+          <div class="appearance-preview__tab">
+            <img src="../icons/icon16.png" alt="">
+            <div>
+              <span data-i18n="settingsPreviewTab">Example saved tab</span>
+              <small class="preview-url preview-url--domain">example.com</small>
+              <small class="preview-url preview-url--full">https://example.com/example</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section-actions">
+        <button class="btn" id="btn-reset-appearance" type="button" data-i18n="settingsResetAppearance">Reset Appearance</button>
       </div>
     </div>
 
@@ -351,6 +135,85 @@
           <input type="checkbox" id="setting-startup">
           <span class="toggle-slider"></span>
         </label>
+      </div>
+    </div>
+
+    <!-- Restore behavior -->
+    <div class="settings-section">
+      <h2 data-i18n="settingsRestoreBehavior">Restore Behavior</h2>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-focus-restored-tab" data-i18n="settingsFocusRestoredTab">Focus restored tab</label>
+          <p data-i18n="settingsFocusRestoredTabDesc">Switch to the opened tab when you restore a single saved link.</p>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="setting-focus-restored-tab">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2 data-i18n="settingsTabCapture">Save Tabs</h2>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-include-pinned-tabs" data-i18n="settingsIncludePinnedTabs">Include pinned tabs</label>
+          <p data-i18n="settingsIncludePinnedTabsDesc">Include pinned tabs when saving from the Dashboard.</p>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="setting-include-pinned-tabs">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-include-audible-tabs" data-i18n="settingsIncludeAudibleTabs">Include audible tabs</label>
+          <p data-i18n="settingsIncludeAudibleTabsDesc">Include tabs that are currently playing audio.</p>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="setting-include-audible-tabs">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="settings-section">
+      <h2 data-i18n="settingsStatistics">Statistics</h2>
+      <div class="settings-stats" role="status" aria-live="polite">
+        <div class="settings-stat">
+          <div class="settings-stat__value" id="settings-stat-tabs">0</div>
+          <div class="settings-stat__label" data-i18n="totalTabs">Total Tabs</div>
+        </div>
+        <div class="settings-stat">
+          <div class="settings-stat__value" id="settings-stat-groups">0</div>
+          <div class="settings-stat__label" data-i18n="totalGroups">Groups</div>
+        </div>
+        <div class="settings-stat">
+          <div class="settings-stat__value" id="settings-stat-average">0</div>
+          <div class="settings-stat__label" data-i18n="settingsAverageTabs">Average per Group</div>
+        </div>
+        <div class="settings-stat">
+          <div class="settings-stat__value" id="settings-stat-oldest">—</div>
+          <div class="settings-stat__label" data-i18n="settingsOldestGroup">Oldest Group</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2 data-i18n="settingsSync">Sync</h2>
+      <div class="settings-stats" role="status" aria-live="polite">
+        <div class="settings-stat">
+          <div class="settings-stat__value settings-stat__value--small" id="settings-last-sync">Not yet</div>
+          <div class="settings-stat__label" data-i18n="settingsLastSuccessfulSync">Last successful sync</div>
+        </div>
+        <div class="settings-stat">
+          <div class="settings-stat__value settings-stat__value--small" id="settings-sync-quota">0 KB / 100 KB</div>
+          <div class="settings-stat__label" data-i18n="settingsSyncQuota">Sync quota usage</div>
+        </div>
+      </div>
+      <div class="quota-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="settings-sync-quota-meter">
+        <div class="quota-meter__fill" id="settings-sync-quota-fill"></div>
       </div>
     </div>
 
@@ -391,7 +254,7 @@
     </div>
   </div>
 
-  <input type="file" id="import-file" accept=".json" style="display:none">
+  <input type="file" id="import-file" accept=".json" hidden>
 
   <script src="options.js" type="module"></script>
 </body>

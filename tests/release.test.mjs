@@ -92,7 +92,9 @@ test('privacy policies disclose storage, synchronization, and Limited Use', () =
   assert.match(html, /chrome\.storage\.local/);
   assert.match(html, /chrome\.storage\.sync/);
   assert.match(html, /Limited Use/i);
-  assert.match(html, /July 22, 2026/);
+  assert.match(html, /July 29, 2026/);
+  assert.match(html, /favicon API/i);
+  assert.match(html, /not stored or synchronized/i);
 });
 
 test('Chrome Web Store graphics have exact required dimensions', () => {
@@ -109,17 +111,24 @@ test('Chrome Web Store graphics have exact required dimensions', () => {
 
 test('release material and reproducible package builder are present', () => {
   const version = JSON.parse(read('manifest.json')).version;
+  const packageVersion = JSON.parse(read('package.json')).version;
 
+  assert.equal(version, packageVersion);
   assert.equal(existsSync(join(projectRoot, 'release/CHROME_WEB_STORE.md')), true);
   assert.equal(existsSync(join(projectRoot, `release/notes/${version}.md`)), true);
   assert.equal(existsSync(join(projectRoot, 'scripts/build-release.ps1')), true);
   assert.equal(existsSync(join(projectRoot, '.github/workflows/ci.yml')), true);
   assert.equal(existsSync(join(projectRoot, '.github/workflows/release.yml')), true);
   assert.equal(existsSync(join(projectRoot, '.github/ISSUE_TEMPLATE/bug_report.yml')), true);
+  assert.ok(read('README.md').includes(`Version ${version}`));
+  assert.ok(read('CHANGELOG.md').includes(`## ${version},`));
+  assert.ok(read('release/CHROME_WEB_STORE.md').startsWith(`# Tabel ${version},`));
 
   const buildScript = read('scripts/build-release.ps1');
   assert.match(buildScript, /Properties\.Remove\('key'\)/);
   assert.match(buildScript, /Release archive contains non-runtime files/);
+  assert.match(buildScript, /'styles'/);
+  assert.match(buildScript, /styles\/tabel\.css/);
 
   const releaseWorkflow = read('.github/workflows/release.yml');
   assert.match(releaseWorkflow, /npm test/);

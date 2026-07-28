@@ -23,7 +23,7 @@ try {
   foreach ($file in @('manifest.json', 'background.js')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $file) -Destination $stageRoot
   }
-  foreach ($directory in @('dashboard', 'options', 'icons', '_locales')) {
+  foreach ($directory in @('dashboard', 'options', 'styles', 'icons', '_locales')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $directory) -Destination $stageRoot -Recurse
   }
 
@@ -51,7 +51,10 @@ try {
       'manifest.json',
       'background.js',
       'dashboard/dashboard.html',
+      'dashboard/lib/appearance.js',
+      'dashboard/lib/tabCapture.js',
       'options/options.html',
+      'styles/tabel.css',
       '_locales/en/messages.json',
       'icons/icon128.png'
     )) {

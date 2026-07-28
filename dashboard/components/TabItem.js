@@ -3,6 +3,8 @@
  * Renders an individual saved tab with favicon, title, URL, and actions.
  */
 
+import { createFaviconUrl } from '../lib/favicon.js';
+
 export class TabItem {
   /**
    * @param {Object} data - Tab data from IndexedDB
@@ -22,9 +24,9 @@ export class TabItem {
     el.dataset.groupId = this.data.groupId;
     el.draggable = true;
 
-    // Favicon URL - use Chrome's favicon service
-    const faviconUrl = this.data.favIconUrl ||
-      `chrome-extension://${chrome.runtime.id}/_favicon/?pageUrl=${encodeURIComponent(this.data.url)}&size=32`;
+    // Always use Chrome's favicon service. Remote favicon URLs are neither
+    // stored nor loaded by the dashboard.
+    const faviconUrl = createFaviconUrl(chrome.runtime, this.data.url);
 
     el.innerHTML = `
       <div class="tab-item__drag-handle" title="${chrome.i18n.getMessage('dragToReorder')}">
@@ -45,7 +47,8 @@ export class TabItem {
            loading="lazy">
       <a class="tab-item__content" href="${this._escapeHtml(this.data.url)}" target="_blank" rel="noopener noreferrer" title="${this._escapeHtml(this.data.url)}">
         <span class="tab-item__title">${this._escapeHtml(this.data.title)}</span>
-        <span class="tab-item__domain" title="${this._escapeHtml(this.data.url)}">${this._escapeHtml(this.data.url)}</span>
+        <span class="tab-item__domain tab-item__domain--host" title="${this._escapeHtml(this.data.url)}">${this._escapeHtml(this._formatDomain(this.data.url))}</span>
+        <span class="tab-item__domain tab-item__domain--full" title="${this._escapeHtml(this.data.url)}">${this._escapeHtml(this.data.url)}</span>
       </a>
       <div class="tab-item__actions">
         <button class="tab-item__btn tab-item__btn--restore" title="${chrome.i18n.getMessage('restoreTab')}" data-action="restore">
@@ -173,5 +176,13 @@ export class TabItem {
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#39;');
+  }
+
+  _formatDomain(url) {
+    try {
+      return new URL(url).hostname || url;
+    } catch {
+      return url;
+    }
   }
 }

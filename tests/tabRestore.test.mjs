@@ -32,6 +32,20 @@ test('openSavedTab rejects an unsuccessful response', async () => {
   );
 });
 
+test('openSavedTab can restore a link without focusing it', async () => {
+  let sentMessage = null;
+  const runtime = {
+    sendMessage: async message => {
+      sentMessage = message;
+      return { success: true, tabId: 10 };
+    }
+  };
+
+  await openSavedTab(runtime, 'https://example.com', false);
+
+  assert.equal(sentMessage.active, false);
+});
+
 test('openSavedTabs rejects a missing confirmation', async () => {
   const runtime = { sendMessage: async () => undefined };
 

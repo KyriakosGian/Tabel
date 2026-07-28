@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tabel Dashboard</title>
+  <link rel="stylesheet" href="../styles/tabel.css">
   <link rel="stylesheet" href="dashboard.css">
   <link rel="icon" type="image/png" href="../icons/icon128.png">
 </head>
@@ -35,6 +36,13 @@
         </div>
       </div>
 
+      <button class="header-save-btn" id="save-tabs-btn" type="button">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span data-i18n="saveTabs">Save Tabs</span>
+      </button>
+
       <button class="header-settings-btn" id="settings-btn" data-i18n-title="settingsTitle" title="Settings">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
@@ -60,6 +68,56 @@
       <p class="empty-state__subtitle" data-i18n="noTabsSubtext"></p>
     </div>
   </main>
+
+  <dialog class="save-tabs-dialog" id="save-tabs-dialog" aria-labelledby="save-tabs-title">
+    <form class="save-tabs-form" id="save-tabs-form">
+      <div class="save-tabs-dialog__header">
+        <div>
+          <h2 id="save-tabs-title" data-i18n="saveTabs">Save Tabs</h2>
+          <p data-i18n="saveTabsDescription">Choose which open tabs to save and where to place them.</p>
+        </div>
+        <button class="dialog-close-btn" id="save-tabs-close" type="button" data-i18n-title="cancel" title="Cancel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <label class="save-tabs-field" for="save-tabs-scope">
+        <span data-i18n="saveTabsScope">Tabs to save</span>
+        <select id="save-tabs-scope">
+          <option value="current" data-i18n="saveCurrentTab">Current tab</option>
+          <option value="selected" data-i18n="saveSelectedTabs">Selected tabs</option>
+          <option value="all" data-i18n="saveAllWindows">All windows</option>
+        </select>
+      </label>
+
+      <div class="save-tabs-current" id="save-tabs-current" role="status"></div>
+
+      <section class="save-tabs-selection" id="save-tabs-selection" hidden>
+        <div class="save-tabs-selection__toolbar">
+          <span id="save-tabs-selection-count">0</span>
+          <button class="text-button" id="save-tabs-select-all" type="button" data-i18n="selectAll">Select all</button>
+        </div>
+        <div class="save-tabs-list" id="save-tabs-list"></div>
+      </section>
+
+      <label class="save-tabs-field" for="save-tabs-destination">
+        <span data-i18n="saveTabsDestination">Destination</span>
+        <select id="save-tabs-destination"></select>
+      </label>
+
+      <label class="save-tabs-field" id="save-tabs-name-row" for="save-tabs-group-name">
+        <span data-i18n="saveTabsGroupName">Group name</span>
+        <input id="save-tabs-group-name" type="text" maxlength="120" required>
+      </label>
+
+      <div class="save-tabs-dialog__actions">
+        <button class="dialog-button" id="save-tabs-cancel" type="button" data-i18n="cancel">Cancel</button>
+        <button class="dialog-button dialog-button--primary" id="save-tabs-submit" type="submit" data-i18n="saveTabs">Save Tabs</button>
+      </div>
+    </form>
+  </dialog>
 
   <!-- Toast container -->
   <div id="toast-container"></div>

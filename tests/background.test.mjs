@@ -11,6 +11,9 @@ const backgroundSource = readFileSync(
 function createHarness(options = {}) {
   let messageListener;
   let actionListener;
+  let contextMenuListener;
+  let installedListener;
+  const contextMenuItems = [];
   const localData = {
     settings: { privacyNoticeVersion: 1 },
     ...((typeof options === 'object' && options.localData) || {})
@@ -21,6 +24,15 @@ function createHarness(options = {}) {
 
   const chrome = {
     action: { onClicked: { addListener(listener) { actionListener = listener; } } },
+    contextMenus: {
+      create(item) { contextMenuItems.push(item); },
+      onClicked: {
+        addListener(listener) {
+          contextMenuListener = listener;
+        }
+      },
+      removeAll: async () => { contextMenuItems.length = 0; }
+    },
     i18n: {
       getMessage: () => 'Group',
       getUILanguage: () => 'en'
@@ -28,7 +40,11 @@ function createHarness(options = {}) {
     runtime: {
       id: 'test-extension-id',
       getURL: path => `chrome-extension://test-extension-id/${path}`,
-      onInstalled: { addListener() {} },
+      onInstalled: {
+        addListener(listener) {
+          installedListener = listener;
+        }
+      },
       onMessage: {
         addListener(listener) {
           messageListener = listener;
@@ -65,9 +81,11 @@ function createHarness(options = {}) {
     Date,
     encodeURIComponent,
     Math,
+    Intl,
     Promise,
     setTimeout,
-    String
+    String,
+    URL
   });
 
   assert.equal(typeof messageListener, 'function');
@@ -94,7 +112,10 @@ function createHarness(options = {}) {
   return {
     dispatch,
     localData,
-    clickAction: () => actionListener()
+    clickAction: () => actionListener(),
+    clickContextMenu: (info, tab) => contextMenuListener(info, tab),
+    contextMenuItems,
+    install: details => installedListener(details)
   };
 }
 
@@ -192,7 +213,38 @@ test('sweep data remains persisted for the dashboard to process', async () => {
   assert.deepEqual(removedTabIds, [11, 12]);
   assert.equal(createdTabs.length, 1);
   assert.equal(harness.localData[pendingKeys[0]].tabs.length, 2);
+  assert.equal('favIconUrl' in harness.localData[pendingKeys[0]].tabs[0], false);
   assert.equal(pendingKeys[0] in harness.localData, true);
+});
+
+test('a sweep closes duplicate browser tabs but stores only the newest URL record', async () => {
+  const removedTabIds = [];
+  const openTabs = [
+    {
+      id: 21,
+      url: 'https://same.example',
+      title: 'Older title',
+      lastAccessed: 10
+    },
+    {
+      id: 22,
+      url: 'https://same.example',
+      title: 'Newer title',
+      lastAccessed: 20
+    }
+  ];
+  const harness = createHarness({
+    queryTabs: async query => query.currentWindow ? openTabs : [],
+    removeTabs: async ids => { removedTabIds.push(...ids); }
+  });
+
+  await harness.clickAction();
+
+  const pending = Object.values(harness.localData)
+    .find(value => value?.id?.startsWith('sweep_'));
+  assert.deepEqual(removedTabIds, [21, 22]);
+  assert.equal(pending.tabs.length, 1);
+  assert.equal(pending.tabs[0].title, 'Newer title');
 });
 
 test('the action never reads browser tabs before privacy consent', async () => {
@@ -216,6 +268,120 @@ test('the action never reads browser tabs before privacy consent', async () => {
   assert.equal(createdTabs.length, 1);
   assert.equal(
     Object.keys(harness.localData).some(key => key.startsWith('tabel_pending_sweep_')),
+    false
+  );
+});
+
+test('Save this link builds a group submenu and keeps the current page focused', async () => {
+  const createdTabs = [];
+  const harness = createHarness({
+    localData: {
+      settings: { privacyNoticeVersion: 1 },
+      tabelContextMenuGroups: [
+        { id: 'group-one', name: 'Group One', locked: false, order: 0 },
+        { id: 'group-locked', name: 'Locked Group', locked: true, order: 1 }
+      ]
+    },
+    createTab: async options => {
+      createdTabs.push(options);
+      return { id: 90 };
+    }
+  });
+
+  await harness.install({ reason: 'update' });
+  assert.deepEqual(
+    harness.contextMenuItems.map(item => item.id),
+    [
+      'tabel-save-tab',
+      'tabel-save-link',
+      'tabel-save-link-new',
+      'tabel-save-link-group:group-one',
+      'tabel-save-link-group:group-locked'
+    ]
+  );
+  assert.equal(
+    harness.contextMenuItems.find(item => item.id === 'tabel-save-link-new').parentId,
+    'tabel-save-link'
+  );
+  assert.equal(
+    harness.contextMenuItems.find(item => item.id === 'tabel-save-link-group:group-locked').enabled,
+    false
+  );
+
+  await harness.clickContextMenu({
+    menuItemId: 'tabel-save-link-new',
+    linkUrl: 'https://example.com/article'
+  }, {
+    id: 12,
+    url: 'https://source.example',
+    title: 'Source'
+  });
+
+  const pending = Object.values(harness.localData)
+    .find(value => value?.source === 'contextMenu');
+  assert.equal(pending.tabs[0].url, 'https://example.com/article');
+  assert.equal(pending.tabs[0].title, 'example.com');
+  assert.equal('destinationGroupId' in pending, false);
+  assert.equal(createdTabs.length, 1);
+  assert.equal(createdTabs[0].active, false);
+});
+
+test('Save this link can target an existing group', async () => {
+  const harness = createHarness({
+    localData: {
+      settings: { privacyNoticeVersion: 1 },
+      tabelContextMenuGroups: [
+        { id: 'group-one', name: 'Group One', locked: false, order: 0 }
+      ]
+    }
+  });
+
+  await harness.install({ reason: 'update' });
+  await harness.clickContextMenu({
+    menuItemId: 'tabel-save-link-group:group-one',
+    linkUrl: 'https://example.com/article'
+  }, {
+    id: 12,
+    url: 'https://source.example',
+    title: 'Source'
+  });
+
+  const pending = Object.values(harness.localData)
+    .find(value => value?.source === 'contextMenu');
+  assert.equal(pending.destinationGroupId, 'group-one');
+});
+
+test('context menus require privacy consent and reject script links', async () => {
+  const harness = createHarness({
+    localData: { settings: { privacyNoticeVersion: 0 } }
+  });
+
+  await harness.clickContextMenu({
+    menuItemId: 'tabel-save-link-new',
+    linkUrl: 'https://example.com'
+  }, {
+    id: 12,
+    url: 'https://source.example',
+    title: 'Source'
+  });
+
+  assert.equal(
+    Object.values(harness.localData).some(value => value?.source === 'contextMenu'),
+    false
+  );
+
+  harness.localData.settings.privacyNoticeVersion = 1;
+  await harness.clickContextMenu({
+    menuItemId: 'tabel-save-link-new',
+    linkUrl: 'javascript:alert(1)'
+  }, {
+    id: 12,
+    url: 'https://source.example',
+    title: 'Source'
+  });
+
+  assert.equal(
+    Object.values(harness.localData).some(value => value?.source === 'contextMenu'),
     false
   );
 });

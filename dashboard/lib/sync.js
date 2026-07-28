@@ -13,15 +13,22 @@
  */
 
 import { db } from './db.js';
+import {
+  getPrunableTombstoneKeys,
+  maxDeletedAt
+} from './tombstoneCleanup.js';
 
 const SYNC_META_KEY = 'tabel_sync_meta';
 const CHUNK_PREFIX  = 'tabel_sync_chunk_';
 const DEVICE_ID_KEY = 'tabelDeviceId';
+export const DEVICE_STATE_PREFIX = 'tabel_sync_device_';
+export const SYNC_STATUS_KEY = 'tabelSyncStatus';
 
 // 3500 UTF-16 code units → ≤ 7000 bytes in the worst case (2 bytes/char for
 // Greek/BMP text), comfortably under the 8192-byte per-item quota.
 const MAX_CHUNK_CHARS = 3500;
 const PUSH_DEBOUNCE_MS = 2000;
+const DEVICE_HEARTBEAT_MS = 24 * 60 * 60 * 1000;
 // Coalesce bursts of remote change events (e.g. chunks arriving separately over a
 // slow/VPN connection) into a single pull instead of one pull per event.
 const PULL_DEBOUNCE_MS = 400;
@@ -47,8 +54,14 @@ export class SyncManager {
     const hadRemote = await this.pull();
     if (!hadRemote) {
       // Cloud is empty — seed it with whatever we have locally.
-      const counts = await db.getCounts();
-      if (counts.groups > 0) this.schedulePush();
+      const data = await db.exportAll();
+      if (
+        data.groups.length > 0 ||
+        data.items.length > 0 ||
+        data.tombstones.length > 0
+      ) {
+        this.schedulePush();
+      }
     }
 
     chrome.storage.onChanged.addListener((changes, area) => {
@@ -87,31 +100,60 @@ export class SyncManager {
   async push() {
     if (this._applyingRemote) return; // don't echo freshly-merged remote data back
     try {
-      const data = await db.exportAll(); // { version, exportedAt, groups, items }
+      const existing = await chrome.storage.sync.get(null);
+      const data = await db.exportAll();
+      const now = Date.now();
+      const currentDeviceState = this._currentDeviceState(existing, data.tombstones, now);
+      const {
+        states: knownDeviceStates,
+        placeholderWrites
+      } = this._collectDeviceStates(existing, currentDeviceState);
+      const prunableKeys = getPrunableTombstoneKeys(
+        data.tombstones,
+        knownDeviceStates,
+        { now }
+      );
+      const prunableSet = new Set(prunableKeys);
+      const retainedTombstones = data.tombstones.filter(
+        tombstone => !prunableSet.has(tombstone.key)
+      );
       const payload = JSON.stringify({
         groups: data.groups,
         items: data.items,
-        tombstones: data.tombstones
+        tombstones: retainedTombstones
       });
       const chunks = this._chunk(payload);
 
       const writeObj = { [SYNC_META_KEY]: {
         deviceId: this.deviceId,
-        updatedAt: Date.now(),
+        updatedAt: now,
         chunkCount: chunks.length,
         version: data.version
       } };
       chunks.forEach((c, i) => { writeObj[CHUNK_PREFIX + i] = c; });
+      writeObj[this._deviceStateKey(this.deviceId)] = currentDeviceState;
+      Object.assign(writeObj, placeholderWrites);
 
       // Identify stale chunk keys left over from a previous, larger payload.
-      const existing = await chrome.storage.sync.get(null);
       const staleKeys = Object.keys(existing).filter(k =>
         k.startsWith(CHUNK_PREFIX) &&
         parseInt(k.slice(CHUNK_PREFIX.length), 10) >= chunks.length
       );
 
       await chrome.storage.sync.set(writeObj);
+
+      // Save the compacted cloud snapshot before removing local tombstones.
+      // A local cleanup failure can only delay cleanup.
+      if (prunableKeys.length > 0) {
+        try {
+          await db.deleteTombstones(prunableKeys);
+        } catch (cleanupError) {
+          console.warn('[Sync] Local tombstone cleanup failed:', cleanupError);
+        }
+      }
+
       if (staleKeys.length) await chrome.storage.sync.remove(staleKeys);
+      await this._recordSuccess('push', now);
       return true;
     } catch (e) {
       console.error('[Sync] Push failed:', e);
@@ -148,6 +190,34 @@ export class SyncManager {
       const result = await db.mergeAll(remoteData);
       this._applyingRemote = false;
 
+      const localData = await db.exportAll();
+      const now = Date.now();
+      const currentDeviceState = this._currentDeviceState(all, localData.tombstones, now);
+      const {
+        states: knownDeviceStates,
+        placeholderWrites
+      } = this._collectDeviceStates(all, currentDeviceState);
+      const stateWrites = { ...placeholderWrites };
+      const previousState = all[this._deviceStateKey(this.deviceId)];
+      if (this._shouldWriteDeviceState(previousState, currentDeviceState, now)) {
+        stateWrites[this._deviceStateKey(this.deviceId)] = currentDeviceState;
+      }
+      if (Object.keys(stateWrites).length > 0) {
+        try {
+          await chrome.storage.sync.set(stateWrites);
+        } catch (stateError) {
+          console.warn('[Sync] Device acknowledgement failed:', stateError);
+        }
+      }
+
+      // Push performs the cleanup so the compacted cloud snapshot is durable
+      // before any local tombstone is removed.
+      const hasPrunableTombstones = getPrunableTombstoneKeys(
+        localData.tombstones,
+        knownDeviceStates,
+        { now }
+      ).length > 0;
+
       // Only re-render when the merge actually brought in remote changes — avoids
       // needless redraws when a pull turns out to be identical to local data.
       if (result.remoteOnlyCount > 0 || result.updatedCount > 0) {
@@ -155,8 +225,9 @@ export class SyncManager {
       }
 
       // We hold data the cloud doesn't have yet → push it so other devices receive it.
-      if (result.localOnlyCount > 0) this.schedulePush();
+      if (result.localOnlyCount > 0 || hasPrunableTombstones) this.schedulePush();
 
+      await this._recordSuccess('pull', now);
       return true;
     } catch (e) {
       this._applyingRemote = false;
@@ -172,6 +243,88 @@ export class SyncManager {
       chunks.push(str.slice(i, i + MAX_CHUNK_CHARS));
     }
     return chunks.length ? chunks : [''];
+  }
+
+  _deviceStateKey(deviceId) {
+    return `${DEVICE_STATE_PREFIX}${deviceId}`;
+  }
+
+  _currentDeviceState(all, tombstones, now) {
+    const previous = all[this._deviceStateKey(this.deviceId)];
+    return {
+      deviceId: this.deviceId,
+      lastSeenAt: now,
+      acknowledgedThrough: Math.max(
+        Number(previous?.acknowledgedThrough) || 0,
+        maxDeletedAt(tombstones)
+      )
+    };
+  }
+
+  _collectDeviceStates(all, currentDeviceState) {
+    const states = new Map();
+    const placeholderWrites = {};
+
+    for (const [key, value] of Object.entries(all)) {
+      if (
+        key.startsWith(DEVICE_STATE_PREFIX) &&
+        typeof value?.deviceId === 'string' &&
+        value.deviceId
+      ) {
+        states.set(value.deviceId, value);
+      }
+    }
+
+    // Legacy versions exposed only the last writer's id in sync metadata.
+    // Preserve that device as unacknowledged until it upgrades and confirms
+    // the tombstones it has received.
+    const legacyDeviceId = all[SYNC_META_KEY]?.deviceId;
+    if (
+      typeof legacyDeviceId === 'string' &&
+      legacyDeviceId &&
+      legacyDeviceId !== this.deviceId &&
+      !states.has(legacyDeviceId)
+    ) {
+      const placeholder = {
+        deviceId: legacyDeviceId,
+        lastSeenAt: Number(all[SYNC_META_KEY]?.updatedAt) || 0,
+        acknowledgedThrough: 0,
+        legacy: true
+      };
+      states.set(legacyDeviceId, placeholder);
+      placeholderWrites[this._deviceStateKey(legacyDeviceId)] = placeholder;
+    }
+
+    states.set(this.deviceId, currentDeviceState);
+    return {
+      states: [...states.values()],
+      placeholderWrites
+    };
+  }
+
+  _shouldWriteDeviceState(previous, current, now) {
+    if (!previous) return true;
+    if (
+      Number(current.acknowledgedThrough) >
+      (Number(previous.acknowledgedThrough) || 0)
+    ) {
+      return true;
+    }
+    return now - (Number(previous.lastSeenAt) || 0) >= DEVICE_HEARTBEAT_MS;
+  }
+
+  async _recordSuccess(operation, timestamp = Date.now()) {
+    if (!chrome.storage?.local?.set) return;
+    try {
+      await chrome.storage.local.set({
+        [SYNC_STATUS_KEY]: {
+          lastSuccessfulSyncAt: timestamp,
+          operation
+        }
+      });
+    } catch (error) {
+      console.warn('[Sync] Failed to save sync status:', error);
+    }
   }
 
   /** Get (or lazily create) a stable per-device identifier. */

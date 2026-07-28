@@ -87,6 +87,30 @@
     "message": "Keep Tabel Dashboard open when you start Chrome.",
     "description": "Startup setting description"
   },
+  "settingsRestoreBehavior": {
+    "message": "Restore Behavior",
+    "description": "Restore behavior section title"
+  },
+  "settingsFocusRestoredTab": {
+    "message": "Focus restored tab",
+    "description": "Focus restored tab setting label"
+  },
+  "settingsFocusRestoredTabDesc": {
+    "message": "Switch to the opened tab when you restore a single saved link.",
+    "description": "Focus restored tab setting description"
+  },
+  "settingsStatistics": {
+    "message": "Statistics",
+    "description": "Statistics section title"
+  },
+  "settingsAverageTabs": {
+    "message": "Average per Group",
+    "description": "Average tabs per group label"
+  },
+  "settingsOldestGroup": {
+    "message": "Oldest Group",
+    "description": "Oldest saved group label"
+  },
   "settingsData": {
     "message": "Data",
     "description": "Data section title"
@@ -193,7 +217,7 @@
     "description": "Privacy notice introduction"
   },
   "privacyNoticeData": {
-    "message": "It stores only the titles, URLs, and icons of tabs that you choose to organize.",
+    "message": "It stores only the titles and URLs of tabs that you choose to organize. Website icons are displayed through Chrome and are not stored.",
     "description": "Tab data description"
   },
   "privacyNoticeStorage": {
@@ -257,6 +281,256 @@
   "colorIndigo": { "message": "Indigo", "description": "Indigo color" },
   "colorPurple": { "message": "Purple", "description": "Purple color" },
   "colorPink": { "message": "Pink", "description": "Pink color" },
+  "saveTabs": {
+    "message": "Save Tabs",
+    "description": "Dashboard button and dialog title"
+  },
+  "saveTabsDescription": {
+    "message": "Choose which open tabs to save and where to place them. They close only after a successful save.",
+    "description": "Save tabs dialog description"
+  },
+  "saveTabsScope": {
+    "message": "Tabs to save",
+    "description": "Save tabs scope label"
+  },
+  "saveCurrentTab": {
+    "message": "Current tab",
+    "description": "Save the most recently used tab in the current window"
+  },
+  "saveSelectedTabs": {
+    "message": "Selected tabs",
+    "description": "Choose individual open tabs"
+  },
+  "saveAllWindows": {
+    "message": "All windows",
+    "description": "Save eligible tabs from all windows"
+  },
+  "saveTabsDestination": {
+    "message": "Destination",
+    "description": "Save tabs destination label"
+  },
+  "saveTabsGroupName": {
+    "message": "Group name",
+    "description": "New saved group name label"
+  },
+  "saveTabsNewGroup": {
+    "message": "New group",
+    "description": "New group destination option"
+  },
+  "savedGroupDefaultName": {
+    "message": "Saved $DATE$",
+    "description": "Default name for a group created with Save Tabs",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "27/07/2026, 18:30"
+      }
+    }
+  },
+  "selectedTabCount": {
+    "message": "$COUNT$ selected",
+    "description": "Selected open tab count",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "openTabCount": {
+    "message": "$COUNT$ tabs will be saved",
+    "description": "All windows capture count",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "saveTabsSuccess": {
+    "message": "$COUNT$ tabs saved.",
+    "description": "Successful tab capture message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "saveTabsError": {
+    "message": "The tabs could not be saved.",
+    "description": "Tab capture error"
+  },
+  "saveTabsCloseError": {
+    "message": "The tabs were saved, but $COUNT$ could not be closed.",
+    "description": "Tab capture succeeded but some browser tabs remained open",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "saveTabsNoNewTabs": {
+    "message": "These tabs are already saved.",
+    "description": "No new tabs were added to an existing group"
+  },
+  "noTabsSelected": {
+    "message": "Select at least one tab.",
+    "description": "No open tabs selected"
+  },
+  "noCapturableTabs": {
+    "message": "No eligible tab is available.",
+    "description": "No tab available after capture filters"
+  },
+  "selectAll": {
+    "message": "Select all",
+    "description": "Select all open tabs"
+  },
+  "clearAll": {
+    "message": "Clear all",
+    "description": "Clear all selected open tabs"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel action"
+  },
+  "locked": {
+    "message": "Locked",
+    "description": "Locked group state"
+  },
+  "settingsThemeSystem": {
+    "message": "System",
+    "description": "Follow operating system theme"
+  },
+  "settingsAppearance": {
+    "message": "Appearance",
+    "description": "Appearance settings section title"
+  },
+  "settingsDensity": {
+    "message": "Density",
+    "description": "Dashboard spacing setting"
+  },
+  "settingsDensityDesc": {
+    "message": "Control the spacing between groups and saved tabs.",
+    "description": "Dashboard spacing description"
+  },
+  "settingsDensityComfortable": {
+    "message": "Comfortable",
+    "description": "Comfortable dashboard density"
+  },
+  "settingsDensityCompact": {
+    "message": "Compact",
+    "description": "Compact dashboard density"
+  },
+  "settingsDensityUltraCompact": {
+    "message": "Ultra Compact",
+    "description": "Smallest dashboard density"
+  },
+  "settingsDefaultGroupWidth": {
+    "message": "Default group width",
+    "description": "Default new group width setting"
+  },
+  "settingsDefaultGroupWidthDesc": {
+    "message": "Set the width used when a new group is created.",
+    "description": "Default new group width description"
+  },
+  "settingsTabUrlMode": {
+    "message": "Tab URL",
+    "description": "Saved tab URL display mode"
+  },
+  "settingsTabUrlModeDesc": {
+    "message": "Hide URLs or show only the domain or full address.",
+    "description": "Saved tab URL display mode description"
+  },
+  "settingsTabUrlHidden": {
+    "message": "Hidden",
+    "description": "Hide saved tab URLs"
+  },
+  "settingsTabUrlDomain": {
+    "message": "Domain",
+    "description": "Show only saved tab domains"
+  },
+  "settingsTabUrlFull": {
+    "message": "Full",
+    "description": "Show full saved tab URLs"
+  },
+  "settingsFontSize": {
+    "message": "Font size",
+    "description": "Application font size setting"
+  },
+  "settingsFontSizeDesc": {
+    "message": "Adjust text size throughout Tabel.",
+    "description": "Application font size description"
+  },
+  "settingsFaviconSize": {
+    "message": "Favicon size",
+    "description": "Saved tab favicon size setting"
+  },
+  "settingsFaviconSizeDesc": {
+    "message": "Adjust favicon size in saved tab rows.",
+    "description": "Saved tab favicon size description"
+  },
+  "settingsAppearancePreview": {
+    "message": "Preview",
+    "description": "Appearance preview label"
+  },
+  "settingsPreviewGroup": {
+    "message": "Example group",
+    "description": "Appearance preview group"
+  },
+  "settingsPreviewTab": {
+    "message": "Example saved tab",
+    "description": "Appearance preview tab"
+  },
+  "settingsResetAppearance": {
+    "message": "Reset Appearance",
+    "description": "Reset appearance settings button"
+  },
+  "settingsTabCapture": {
+    "message": "Save Tabs",
+    "description": "Save Tabs behavior settings section"
+  },
+  "settingsIncludePinnedTabs": {
+    "message": "Include pinned tabs",
+    "description": "Pinned tab capture setting"
+  },
+  "settingsIncludePinnedTabsDesc": {
+    "message": "Include pinned tabs when saving from the Dashboard.",
+    "description": "Pinned tab capture setting description"
+  },
+  "settingsIncludeAudibleTabs": {
+    "message": "Include audible tabs",
+    "description": "Audible tab capture setting"
+  },
+  "settingsIncludeAudibleTabsDesc": {
+    "message": "Include tabs that are currently playing audio.",
+    "description": "Audible tab capture setting description"
+  },
+  "settingsSync": {
+    "message": "Sync",
+    "description": "Synchronization status section"
+  },
+  "settingsLastSuccessfulSync": {
+    "message": "Last successful sync",
+    "description": "Last sync timestamp label"
+  },
+  "settingsSyncQuota": {
+    "message": "Sync quota usage",
+    "description": "Sync quota usage label"
+  },
+  "settingsSyncNotYet": {
+    "message": "Not yet",
+    "description": "No successful sync timestamp"
+  },
+  "contextSaveThisTab": {
+    "message": "Save this tab",
+    "description": "Page context menu item"
+  },
+  "contextSaveThisLink": {
+    "message": "Save this link",
+    "description": "Link context menu item"
+  },
   "syncQuotaError": {
     "message": "Sync storage is full. Some groups may not sync across devices.",
     "description": "Shown when chrome.storage.sync quota is exceeded"

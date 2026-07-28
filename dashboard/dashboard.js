@@ -9,8 +9,18 @@ import { SyncManager } from './lib/sync.js';
 import { openSavedTab, openSavedTabs } from './lib/tabRestore.js';
 import { acknowledgePendingSweep, getPendingSweeps } from './lib/pendingSweeps.js';
 import { acceptPrivacyNotice, hasPrivacyConsent } from './lib/privacyConsent.js';
+import { applyAppearance, APPEARANCE_DEFAULTS } from './lib/appearance.js';
+import {
+  closeCapturedTabs,
+  filterCapturableTabs,
+  findMostRecentTab,
+  toSavedTabRecords
+} from './lib/tabCapture.js';
+import { createFaviconUrl } from './lib/favicon.js';
 import { TabGroup } from './components/TabGroup.js';
 import { DragHandler } from './components/DragHandler.js';
+
+const CONTEXT_MENU_GROUPS_KEY = 'tabelContextMenuGroups';
 
 class Dashboard {
   constructor() {
@@ -20,6 +30,16 @@ class Dashboard {
     this._searchTimer = null;
     this._renderSig = null; // signature of the last render — skip rebuild if unchanged
     this._privacyConsentPromise = null;
+    this._captureTabs = [];
+    this._currentCaptureTab = null;
+    this._contextMenuGroupSignature = null;
+    this._colorSchemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+    this.settings = {
+      ...APPEARANCE_DEFAULTS,
+      includePinnedTabs: false,
+      includeAudibleTabs: true,
+      focusRestoredTab: true
+    };
     this._init();
   }
 
@@ -113,8 +133,9 @@ class Dashboard {
     try {
       const result = await chrome.storage.local.get('settings');
       if (result.settings) {
-        this._applyThemeStyles(result.settings);
+        this.settings = { ...this.settings, ...result.settings };
       }
+      this._applyThemeStyles(this.settings);
     } catch (e) {
       console.warn('[Dashboard] Failed to load theme settings:', e);
     }
@@ -123,27 +144,11 @@ class Dashboard {
   /** Apply theme class and CSS variables to documentElement */
   _applyThemeStyles(settings) {
     if (!settings) return;
-
-    // Theme switching
-    if (settings.theme === 'light') {
-      document.documentElement.classList.add('theme-light');
-    } else {
-      document.documentElement.classList.remove('theme-light');
-    }
-
-    document.documentElement.classList.toggle('hide-tab-urls', settings.showTabUrls === false);
-
-    // Custom opacity
-    if (settings.customCardOpacity !== undefined) {
-      const opacity = settings.customCardOpacity / 100;
-      document.documentElement.style.setProperty('--custom-card-opacity', opacity.toFixed(2));
-      // Also derive glass-bg opacity (slightly less than card bg opacity for depth)
-      const glassOpacity = Math.max(0.1, opacity - 0.1);
-      document.documentElement.style.setProperty('--custom-glass-opacity', glassOpacity.toFixed(2));
-    } else {
-      document.documentElement.style.removeProperty('--custom-card-opacity');
-      document.documentElement.style.removeProperty('--custom-glass-opacity');
-    }
+    this.settings = applyAppearance(
+      document.documentElement,
+      settings,
+      this._colorSchemeQuery.matches
+    );
   }
 
   /** Check extension-local storage for pending sweep data */
@@ -152,12 +157,30 @@ class Dashboard {
       const pendingSweeps = await getPendingSweeps();
 
       let savedCount = 0;
+      let contextSavedCount = 0;
       let failedCount = 0;
       for (const pending of pendingSweeps) {
         try {
-          await db.createGroup(pending.groupName, pending.tabs, { sourceSweepId: pending.id });
+          let processedCount;
+          if (pending.destinationGroupId) {
+            const result = await db.addTabsToGroup(
+              pending.destinationGroupId,
+              pending.tabs
+            );
+            processedCount = result.addedCount;
+          } else {
+            await db.createGroup(pending.groupName, pending.tabs, {
+              sourceSweepId: pending.id,
+              width: this.settings.defaultGroupWidth
+            });
+            processedCount = toSavedTabRecords(pending.tabs).length;
+          }
           await acknowledgePendingSweep(pending.id);
-          savedCount += pending.tabs.length;
+          if (pending.source === 'contextMenu') {
+            contextSavedCount += processedCount;
+          } else {
+            savedCount += processedCount;
+          }
         } catch (error) {
           failedCount++;
           console.error('[Dashboard] Failed to process pending sweep:', pending.id, error);
@@ -167,6 +190,13 @@ class Dashboard {
       if (savedCount > 0) {
         this._showToast(
           chrome.i18n.getMessage('sweepNotification', [savedCount.toString()]),
+          'success'
+        );
+        this.sync?.schedulePush();
+      }
+      if (contextSavedCount > 0) {
+        this._showToast(
+          chrome.i18n.getMessage('saveTabsSuccess', [String(contextSavedCount)]),
           'success'
         );
         this.sync?.schedulePush();
@@ -188,6 +218,7 @@ class Dashboard {
     // Gather each group's (optionally filtered) tabs up front, so we can tell
     // whether anything actually changed before touching the DOM.
     const groups = await db.getAllGroups();
+    await this._cacheContextMenuGroups(groups);
     const toRender = [];
     for (const group of groups) {
       let tabs = await db.getTabsByGroup(group.id);
@@ -250,7 +281,7 @@ class Dashboard {
   _renderSignature(filterQuery, toRender) {
     const parts = toRender.map(({ group, tabs }) =>
       [group.id, group.name, group.order, group.collapsed, group.locked, group.width, group.bgColor,
-        tabs.map(t => `${t.id}:${t.order}:${t.title}:${t.url}:${t.favIconUrl || ''}`).join('|')
+        tabs.map(t => `${t.id}:${t.order}:${t.title}:${t.url}`).join('|')
       ].join('~')
     );
     return filterQuery + '#' + parts.join('§');
@@ -290,6 +321,7 @@ class Dashboard {
       },
       onGroupsReordered: async (groupIds) => {
         await db.reorderGroups(groupIds);
+        await this._cacheContextMenuGroups(await db.getAllGroups());
         this.sync?.schedulePush();
       }
     });
@@ -311,6 +343,41 @@ class Dashboard {
       chrome.runtime.openOptionsPage();
     });
 
+    document.getElementById('save-tabs-btn').addEventListener('click', () => {
+      this._openSaveTabsDialog();
+    });
+    document.getElementById('save-tabs-close').addEventListener('click', () => {
+      document.getElementById('save-tabs-dialog').close();
+    });
+    document.getElementById('save-tabs-cancel').addEventListener('click', () => {
+      document.getElementById('save-tabs-dialog').close();
+    });
+    document.getElementById('save-tabs-scope').addEventListener('change', () => {
+      this._updateSaveTabsScope();
+    });
+    document.getElementById('save-tabs-destination').addEventListener('change', (event) => {
+      const isNewGroup = event.target.value === '__new__';
+      document.getElementById('save-tabs-name-row').hidden = !isNewGroup;
+      document.getElementById('save-tabs-group-name').required = isNewGroup;
+    });
+    document.getElementById('save-tabs-select-all').addEventListener('click', () => {
+      const checkboxes = [...document.querySelectorAll('#save-tabs-list input[type="checkbox"]')];
+      const shouldSelect = checkboxes.some(checkbox => !checkbox.checked);
+      checkboxes.forEach(checkbox => { checkbox.checked = shouldSelect; });
+      this._updateSelectedTabCount();
+    });
+    document.getElementById('save-tabs-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      this._saveCapturedTabs();
+    });
+    document.getElementById('save-tabs-dialog').addEventListener('click', (event) => {
+      if (event.target === event.currentTarget) event.currentTarget.close();
+    });
+
+    this._colorSchemeQuery.addEventListener('change', () => {
+      if (this.settings.theme === 'system') this._applyThemeStyles(this.settings);
+    });
+
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       // Ctrl+F → Focus search
@@ -328,6 +395,231 @@ class Dashboard {
     });
   }
 
+  async _openSaveTabsDialog() {
+    const dialog = document.getElementById('save-tabs-dialog');
+    const submitButton = document.getElementById('save-tabs-submit');
+    submitButton.disabled = true;
+
+    try {
+      const [openTabs, groups, dashboardTab] = await Promise.all([
+        chrome.tabs.query({}),
+        db.getAllGroups(),
+        chrome.tabs.getCurrent()
+      ]);
+
+      this._captureTabs = filterCapturableTabs(openTabs, this.settings);
+      const currentWindowTabs = this._captureTabs.filter(
+        tab => tab.windowId === dashboardTab?.windowId
+      );
+      this._currentCaptureTab = findMostRecentTab(currentWindowTabs);
+
+      this._renderCaptureDestinations(groups);
+      this._renderOpenTabSelection();
+
+      const dateLabel = new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      }).format(new Date());
+      document.getElementById('save-tabs-group-name').value =
+        chrome.i18n.getMessage('savedGroupDefaultName', [dateLabel]) || `Saved ${dateLabel}`;
+      document.getElementById('save-tabs-scope').value = 'current';
+      this._updateSaveTabsScope();
+
+      if (!dialog.open) dialog.showModal();
+    } catch (error) {
+      console.error('[Dashboard] Failed to prepare tab capture:', error);
+      this._showToast(chrome.i18n.getMessage('saveTabsError'), 'error');
+    } finally {
+      submitButton.disabled = false;
+    }
+  }
+
+  _renderCaptureDestinations(groups) {
+    const destination = document.getElementById('save-tabs-destination');
+    destination.replaceChildren();
+
+    const newGroupOption = document.createElement('option');
+    newGroupOption.value = '__new__';
+    newGroupOption.textContent = chrome.i18n.getMessage('saveTabsNewGroup') || 'New group';
+    destination.appendChild(newGroupOption);
+
+    for (const group of groups) {
+      const option = document.createElement('option');
+      option.value = group.id;
+      option.textContent = group.locked
+        ? `${group.name} (${chrome.i18n.getMessage('locked') || 'Locked'})`
+        : group.name;
+      option.disabled = group.locked === true;
+      destination.appendChild(option);
+    }
+
+    destination.value = '__new__';
+    document.getElementById('save-tabs-name-row').hidden = false;
+    document.getElementById('save-tabs-group-name').required = true;
+  }
+
+  _renderOpenTabSelection() {
+    const list = document.getElementById('save-tabs-list');
+    list.replaceChildren();
+
+    for (const tab of this._captureTabs) {
+      const label = document.createElement('label');
+      label.className = 'save-tabs-list__item';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.value = String(tab.id);
+      checkbox.checked = tab.highlighted === true;
+      checkbox.addEventListener('change', () => this._updateSelectedTabCount());
+
+      const favicon = document.createElement('img');
+      favicon.className = 'save-tabs-list__favicon';
+      favicon.src = createFaviconUrl(chrome.runtime, tab.url);
+      favicon.alt = '';
+      favicon.addEventListener('error', () => {
+        favicon.src = '../icons/icon16.png';
+      }, { once: true });
+
+      const content = document.createElement('span');
+      content.className = 'save-tabs-list__content';
+
+      const title = document.createElement('span');
+      title.className = 'save-tabs-list__title';
+      title.textContent = tab.title || tab.url;
+
+      const url = document.createElement('span');
+      url.className = 'save-tabs-list__url';
+      url.textContent = tab.url;
+
+      content.append(title, url);
+      label.append(checkbox, favicon, content);
+      list.appendChild(label);
+    }
+
+    this._updateSelectedTabCount();
+  }
+
+  _updateSelectedTabCount() {
+    const checkboxes = [...document.querySelectorAll('#save-tabs-list input[type="checkbox"]')];
+    const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+    document.getElementById('save-tabs-selection-count').textContent =
+      chrome.i18n.getMessage('selectedTabCount', [String(selectedCount)]) ||
+      `${selectedCount} selected`;
+    document.getElementById('save-tabs-select-all').textContent = chrome.i18n.getMessage(
+      selectedCount === checkboxes.length && checkboxes.length > 0 ? 'clearAll' : 'selectAll'
+    );
+  }
+
+  _updateSaveTabsScope() {
+    const scope = document.getElementById('save-tabs-scope').value;
+    const selection = document.getElementById('save-tabs-selection');
+    const current = document.getElementById('save-tabs-current');
+    selection.hidden = scope !== 'selected';
+
+    if (scope === 'current') {
+      current.hidden = false;
+      current.textContent = this._currentCaptureTab
+        ? (this._currentCaptureTab.title || this._currentCaptureTab.url)
+        : chrome.i18n.getMessage('noCapturableTabs');
+    } else if (scope === 'all') {
+      current.hidden = false;
+      current.textContent = chrome.i18n.getMessage(
+        'openTabCount',
+        [String(this._captureTabs.length)]
+      );
+    } else {
+      current.hidden = true;
+    }
+  }
+
+  _getTabsForSelectedScope() {
+    const scope = document.getElementById('save-tabs-scope').value;
+    if (scope === 'current') return this._currentCaptureTab ? [this._currentCaptureTab] : [];
+    if (scope === 'all') return this._captureTabs;
+
+    const selectedIds = new Set(
+      [...document.querySelectorAll('#save-tabs-list input[type="checkbox"]:checked')]
+        .map(checkbox => Number(checkbox.value))
+    );
+    return this._captureTabs.filter(tab => selectedIds.has(tab.id));
+  }
+
+  async _saveCapturedTabs() {
+    const submitButton = document.getElementById('save-tabs-submit');
+    const destination = document.getElementById('save-tabs-destination').value;
+    const capturedBrowserTabs = this._getTabsForSelectedScope();
+    const tabs = toSavedTabRecords(capturedBrowserTabs);
+
+    if (tabs.length === 0) {
+      this._showToast(chrome.i18n.getMessage('noTabsSelected'), 'error');
+      return;
+    }
+
+    submitButton.disabled = true;
+    try {
+      let addedCount = tabs.length;
+      if (destination === '__new__') {
+        const nameInput = document.getElementById('save-tabs-group-name');
+        const name = nameInput.value.trim();
+        if (!name) {
+          nameInput.focus();
+          return;
+        }
+        await db.createGroup(name, tabs, { width: this.settings.defaultGroupWidth });
+      } else {
+        const result = await db.addTabsToGroup(destination, tabs);
+        addedCount = result.addedCount;
+      }
+
+      document.getElementById('save-tabs-dialog').close();
+      const closeResult = await closeCapturedTabs(chrome.tabs, capturedBrowserTabs);
+      this._renderSig = null;
+      try {
+        await this._loadAndRender();
+      } catch (renderError) {
+        console.warn('[Dashboard] Saved tabs but failed to refresh the view:', renderError);
+      }
+      this.sync?.schedulePush();
+      if (closeResult.failedCount > 0) {
+        this._showToast(
+          chrome.i18n.getMessage('saveTabsCloseError', [String(closeResult.failedCount)]),
+          'error'
+        );
+      } else {
+        this._showToast(
+          chrome.i18n.getMessage('saveTabsSuccess', [String(addedCount)]),
+          'success'
+        );
+      }
+    } catch (error) {
+      console.error('[Dashboard] Failed to save open tabs:', error);
+      this._showToast(chrome.i18n.getMessage('saveTabsError'), 'error');
+    } finally {
+      submitButton.disabled = false;
+    }
+  }
+
+  async _cacheContextMenuGroups(groups = null) {
+    try {
+      const currentGroups = groups || await db.getAllGroups();
+      const summaries = currentGroups.map(group => ({
+        id: group.id,
+        name: group.name,
+        locked: group.locked === true,
+        order: Number(group.order) || 0
+      }));
+      const signature = JSON.stringify(summaries);
+      if (signature === this._contextMenuGroupSignature) return;
+
+      await chrome.storage.local.set({
+        [CONTEXT_MENU_GROUPS_KEY]: summaries
+      });
+      this._contextMenuGroupSignature = signature;
+    } catch (error) {
+      console.warn('[Dashboard] Failed to update context menu groups:', error);
+    }
+  }
+
   /** Listen for messages from background script or options page */
   _listenForMessages() {
     // Keep this listener synchronous (no async/Promise return) so Chrome doesn't
@@ -342,7 +634,8 @@ class Dashboard {
         this._ensurePrivacyConsent();
       } else if (msg.type === 'SETTINGS_CHANGED') {
         // Apply theme/custom styling changes dynamically in real-time
-        this._applyThemeStyles(msg.settings);
+        this.settings = { ...this.settings, ...msg.settings };
+        this._applyThemeStyles(this.settings);
       } else if (msg.type === 'DATA_CHANGED') {
         this._ensurePrivacyConsent().then(() => {
           this._renderSig = null;
@@ -356,7 +649,11 @@ class Dashboard {
 
   async _restoreTab(data) {
     try {
-      await openSavedTab(chrome.runtime, data.url, true);
+      await openSavedTab(
+        chrome.runtime,
+        data.url,
+        this.settings.focusRestoredTab !== false
+      );
     } catch (e) {
       console.error('[Dashboard] Failed to open tab:', data.url, e);
       return; // Don't delete if the tab failed to open
@@ -396,11 +693,13 @@ class Dashboard {
 
   async _updateGroup(groupId, updates) {
     await db.updateGroup(groupId, updates);
+    await this._cacheContextMenuGroups();
     this.sync?.schedulePush();
   }
 
   async _deleteGroup(groupId) {
     await db.deleteGroup(groupId);
+    await this._cacheContextMenuGroups();
 
     // Remove from DOM
     const el = document.querySelector(`[data-group-id="${groupId}"]`);

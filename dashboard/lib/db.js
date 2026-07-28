@@ -5,9 +5,10 @@
  */
 
 import { createTombstone, mergeSyncData } from './merge.js';
+import { sanitizeTabRecord } from './recordSanitizer.js';
 
 const DB_NAME = 'TabelDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 const STORES = {
   GROUPS: 'tabGroups',
@@ -52,6 +53,19 @@ class TabelDB {
         // Remove the deprecated thumbnails store from older (v1) installs.
         if (db.objectStoreNames.contains('thumbnails')) {
           db.deleteObjectStore('thumbnails');
+        }
+
+        // Version 4 stops storing remote favicon URLs. Existing records are
+        // migrated in place so legacy favicon data also leaves IndexedDB.
+        if (event.oldVersion < 4 && db.objectStoreNames.contains(STORES.ITEMS)) {
+          const itemStore = event.target.transaction.objectStore(STORES.ITEMS);
+          const cursorRequest = itemStore.openCursor();
+          cursorRequest.onsuccess = () => {
+            const cursor = cursorRequest.result;
+            if (!cursor) return;
+            cursor.update(sanitizeTabRecord(cursor.value));
+            cursor.continue();
+          };
         }
       };
 
@@ -103,12 +117,15 @@ class TabelDB {
   /** Generic put (insert/update) */
   async _put(storeName, data) {
     const db = await this._getDB();
+    const storedData = storeName === STORES.ITEMS
+      ? sanitizeTabRecord(data)
+      : data;
     return new Promise((resolve, reject) => {
       const tx = db.transaction(storeName, 'readwrite');
       const store = tx.objectStore(storeName);
-      store.put(data);
+      store.put(storedData);
 
-      tx.oncomplete = () => resolve(data);
+      tx.oncomplete = () => resolve(storedData);
       tx.onerror = (e) => reject(e.target.error);
     });
   }
@@ -123,6 +140,7 @@ class TabelDB {
       if (existing) return existing;
     }
 
+    const uniqueTabs = this._dedupeTabsByUrl(tabs);
     const now = Date.now();
     const groupId = `grp_${now}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -134,8 +152,10 @@ class TabelDB {
       order: 0,
       collapsed: false,
       locked: false,
-      tabCount: tabs.length,
-      width: 50,
+      tabCount: uniqueTabs.length,
+      width: [33, 50, 100].includes(Number(options.width))
+        ? Number(options.width)
+        : 50,
       bgColor: '',
       ...(options.sourceSweepId ? { sourceSweepId: options.sourceSweepId } : {})
     };
@@ -149,23 +169,23 @@ class TabelDB {
     group.order = 0;
 
     // Deduplicate: silently remove matching URLs from older groups
-    if (tabs.length > 0) {
-      await this._removeDuplicateUrls(tabs.map(t => t.url));
+    if (uniqueTabs.length > 0) {
+      await this._removeDuplicateUrls(uniqueTabs.map(t => t.url));
     }
 
     // Save group
     await this._put(STORES.GROUPS, group);
 
     // Save all tabs in batch
-    if (tabs.length > 0) {
-      await this._batchPutItems(groupId, tabs);
+    if (uniqueTabs.length > 0) {
+      await this._batchPutItems(groupId, uniqueTabs);
     }
 
     return group;
   }
 
   /** Remove tabs with matching URLs from all existing groups (deduplication) */
-  async _removeDuplicateUrls(urls) {
+  async _removeDuplicateUrls(urls, options = {}) {
     const urlSet = new Set(urls);
     const allItems = await this._getAll(STORES.ITEMS);
     const affectedGroupIds = new Set();
@@ -192,7 +212,7 @@ class TabelDB {
     // Update tab counts and remove empty groups
     for (const gId of affectedGroupIds) {
       const remaining = await this.getTabsByGroup(gId);
-      if (remaining.length === 0) {
+      if (remaining.length === 0 && gId !== options.preserveGroupId) {
         await this.deleteGroup(gId);
       } else {
         await this.updateGroup(gId, { tabCount: remaining.length });
@@ -281,7 +301,7 @@ class TabelDB {
   // ─── Tab Item Operations ───────────────────────────────────
 
   /** Batch insert tabs for a group */
-  async _batchPutItems(groupId, tabs) {
+  async _batchPutItems(groupId, tabs, startOrder = 0) {
     const db = await this._getDB();
     const now = Date.now();
 
@@ -295,8 +315,7 @@ class TabelDB {
           groupId: groupId,
           url: tab.url,
           title: tab.title || tab.url,
-          favIconUrl: tab.favIconUrl || '',
-          order: index,
+          order: startOrder + index,
           createdAt: now,
           updatedAt: now
         };
@@ -306,6 +325,80 @@ class TabelDB {
       tx.oncomplete = () => resolve();
       tx.onerror = (e) => reject(e.target.error);
     });
+  }
+
+  /** Insert new tabs first and move the existing tabs below them */
+  async _prependItems(groupId, tabs, currentTabs) {
+    const db = await this._getDB();
+    const now = Date.now();
+
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.ITEMS, 'readwrite');
+      const store = tx.objectStore(STORES.ITEMS);
+
+      tabs.forEach((tab, index) => {
+        store.put({
+          id: `tab_${now}_${index}_${Math.random().toString(36).slice(2, 6)}`,
+          groupId,
+          url: tab.url,
+          title: tab.title || tab.url,
+          order: index,
+          createdAt: now,
+          updatedAt: now
+        });
+      });
+
+      currentTabs.forEach((tab, index) => {
+        store.put(sanitizeTabRecord({
+          ...tab,
+          order: tabs.length + index,
+          updatedAt: now
+        }));
+      });
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = (e) => reject(e.target.error);
+    });
+  }
+
+  _dedupeTabsByUrl(tabs) {
+    const uniqueTabs = new Map();
+    for (const tab of Array.isArray(tabs) ? tabs : []) {
+      if (!tab?.url) continue;
+      uniqueTabs.set(tab.url, tab);
+    }
+    return [...uniqueTabs.values()];
+  }
+
+  /**
+   * Add new URLs to an existing unlocked group.
+   * A new capture replaces older saved records with the same URL.
+   */
+  async addTabsToGroup(groupId, tabs = []) {
+    const group = await this.getGroup(groupId);
+    if (!group) throw new Error('Group not found');
+    if (group.locked) throw new Error('Group is locked');
+
+    const uniqueTabs = this._dedupeTabsByUrl(tabs);
+    if (uniqueTabs.length === 0) {
+      return { addedCount: 0, replacedCount: 0 };
+    }
+
+    const existingItems = await this._getAll(STORES.ITEMS);
+    const incomingUrls = new Set(uniqueTabs.map(tab => tab.url));
+    const replacedCount = existingItems.filter(item => incomingUrls.has(item.url)).length;
+
+    await this._removeDuplicateUrls([...incomingUrls], { preserveGroupId: groupId });
+    const currentTabs = await this.getTabsByGroup(groupId);
+    await this._prependItems(groupId, uniqueTabs, currentTabs);
+    await this.updateGroup(groupId, {
+      tabCount: currentTabs.length + uniqueTabs.length
+    });
+
+    return {
+      addedCount: uniqueTabs.length,
+      replacedCount
+    };
   }
 
   /** Get all tabs in a group sorted by order */
@@ -324,9 +417,8 @@ class TabelDB {
     const tab = await this.getTab(tabId);
     if (!tab) return null;
 
-    const updated = { ...tab, ...updates, updatedAt: Date.now() };
-    await this._put(STORES.ITEMS, updated);
-    return updated;
+    const updated = sanitizeTabRecord({ ...tab, ...updates, updatedAt: Date.now() });
+    return this._put(STORES.ITEMS, updated);
   }
 
   /** Delete a single tab */
@@ -425,10 +517,26 @@ class TabelDB {
     return this._getAll(STORES.TOMBSTONES);
   }
 
+  /** Remove tombstones only after the sync layer confirms safe compaction. */
+  async deleteTombstones(keys) {
+    const uniqueKeys = [...new Set(keys)].filter(key => typeof key === 'string' && key);
+    if (uniqueKeys.length === 0) return;
+
+    const db = await this._getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORES.TOMBSTONES, 'readwrite');
+      const store = tx.objectStore(STORES.TOMBSTONES);
+      for (const key of uniqueKeys) store.delete(key);
+
+      tx.oncomplete = () => resolve();
+      tx.onerror = (e) => reject(e.target.error);
+    });
+  }
+
   /** Export all data */
   async exportAll() {
     const groups = await this._getAll(STORES.GROUPS);
-    const items = await this._getAll(STORES.ITEMS);
+    const items = (await this._getAll(STORES.ITEMS)).map(sanitizeTabRecord);
     const tombstones = await this.getAllTombstones();
     return {
       version: DB_VERSION,
@@ -454,7 +562,7 @@ class TabelDB {
       createdAt: group.createdAt || importedAt,
       updatedAt: importedAt
     }));
-    const importedItems = data.items.map(item => ({
+    const importedItems = data.items.map(item => sanitizeTabRecord({
       ...item,
       createdAt: item.createdAt || importedAt,
       updatedAt: importedAt
@@ -522,11 +630,16 @@ class TabelDB {
   /** Merge local and remote records. Tombstones propagate deletions safely. */
   async mergeAll(remoteData) {
     const localGroups = await this._getAll(STORES.GROUPS);
-    const localItems  = await this._getAll(STORES.ITEMS);
+    const localItems = (await this._getAll(STORES.ITEMS)).map(sanitizeTabRecord);
     const localTombstones = await this.getAllTombstones();
     const merged = mergeSyncData(
       { groups: localGroups, items: localItems, tombstones: localTombstones },
-      remoteData
+      {
+        ...remoteData,
+        items: Array.isArray(remoteData?.items)
+          ? remoteData.items.map(sanitizeTabRecord)
+          : remoteData?.items
+      }
     );
 
     // ── Write merged data ────────────────────────────────────
@@ -546,7 +659,7 @@ class TabelDB {
         groupStore.put(group);
       }
       for (const item of merged.items) {
-        itemStore.put(item);
+        itemStore.put(sanitizeTabRecord(item));
       }
       for (const tombstone of merged.tombstones) {
         tombstoneStore.put(tombstone);

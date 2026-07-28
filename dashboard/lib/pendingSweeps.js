@@ -21,7 +21,10 @@ export async function getPendingSweeps(storageArea = chrome.storage.local) {
 
 /** Remove a sweep only after its tabs have been stored in IndexedDB. */
 export async function acknowledgePendingSweep(id, storageArea = chrome.storage.local) {
-  if (typeof id !== 'string' || !id.startsWith('sweep_')) {
+  if (
+    typeof id !== 'string' ||
+    (!id.startsWith('sweep_') && !id.startsWith('context_'))
+  ) {
     throw new TypeError('Invalid sweep id');
   }
 

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "default_locale": "en",
   "homepage_url": "https://kyriakosgian.github.io/Tabel/",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA37DHEBZDAlpkGb3WnDKSuT1M/hwm8cand4iFQcfR/wGHxh8xMV8n7yqfT+dF5iqS79+WKS+s5dRZkiqlz2YIOPW21ztpdWsv4aDpDRjMmjgN284+jhoLudb7bxRDF0aXCo/9avdD+3rbOcUHzDc51F1fWzR4WDZrUCmD5hA5EPbCpz7OAZcHvrhNtC2rH6ZlCMuVEGPgE3PTykvVDBzy1lUapTVtaRh3K/fSatIqMzIxNWscj0qLiYt3VayHxkwFV71hRNRWfGmyDe7nwOIShkq37e5+OlZKdrSyDff7MuDIEWgmVCqcWMNPd9zEwbxmABZr8YTf9DSSYvoFWo8HHwIDAQAB",
@@ -23,6 +23,7 @@
     "service_worker": "background.js"
   },
   "permissions": [
+    "contextMenus",
     "tabs",
     "storage",
     "favicon"

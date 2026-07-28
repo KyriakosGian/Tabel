@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.6.0, 2026-07-29
+
+- Stopped storing and synchronizing external favicon URLs.
+- Added conservative tombstone cleanup after a 90-day retention period and acknowledgement by every known device.
+- Unified the Dashboard and Settings visual foundation.
+- Added a setting to control focus when restoring one saved link.
+- Added local tab and group statistics to Settings.
+- Added selective tab capture from the Dashboard for one tab, selected tabs, or every window, with closure only after successful persistence.
+- Added safe insertion into existing unlocked groups.
+- Added pinned-tab and audible-tab capture filters.
+- Added System theme, three density levels, default group width, URL display modes, font size, favicon size, live preview, and appearance reset.
+- Added the last successful synchronization time and sync quota usage to Settings.
+- Added context menu actions for saving the current page or a selected link, including a link destination submenu that keeps page focus.
+- Standardized URL deduplication so a new capture replaces every older saved copy.
+- New tabs saved into an existing group now appear at the top.
+
 ## 1.5.0, 2026-07-26
 
 - Added a setting to show or hide tab URLs for a more compact Dashboard.

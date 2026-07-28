@@ -5,16 +5,25 @@
  */
 
 import { db } from '../dashboard/lib/db.js';
-import { SyncManager } from '../dashboard/lib/sync.js';
+import { SyncManager, SYNC_STATUS_KEY } from '../dashboard/lib/sync.js';
+import {
+  applyAppearance,
+  APPEARANCE_DEFAULTS,
+  normalizeAppearance
+} from '../dashboard/lib/appearance.js';
+
+const CONTEXT_MENU_GROUPS_KEY = 'tabelContextMenuGroups';
 
 class OptionsController {
   constructor() {
     this.settings = {
-      theme: 'dark',
+      ...APPEARANCE_DEFAULTS,
       keepOpenOnStartup: true,
-      customCardOpacity: 75,
-      showTabUrls: true
+      includePinnedTabs: false,
+      includeAudibleTabs: true,
+      focusRestoredTab: true
     };
+    this._colorSchemeQuery = window.matchMedia('(prefers-color-scheme: light)');
     this.sync = new SyncManager();
     this._init();
   }
@@ -22,6 +31,8 @@ class OptionsController {
   async _init() {
     this._applyI18n();
     await this._loadSettings();
+    await this._loadStatistics();
+    await this._loadSyncStatus();
     this._bindEvents();
   }
 
@@ -45,13 +56,15 @@ class OptionsController {
     }
 
     // Apply to UI
-    document.getElementById('setting-theme').value = this.settings.theme;
+    this.settings = normalizeAppearance(this.settings);
+    this._syncAppearanceControls();
     document.getElementById('setting-startup').checked = this.settings.keepOpenOnStartup ?? true;
-    document.getElementById('setting-show-tab-urls').checked = this.settings.showTabUrls ?? true;
-
-    // Custom Appearance UI
-    document.getElementById('setting-bg-opacity').value = this.settings.customCardOpacity ?? 75;
-    document.getElementById('bg-opacity-val').textContent = (this.settings.customCardOpacity ?? 75) + '%';
+    document.getElementById('setting-focus-restored-tab').checked =
+      this.settings.focusRestoredTab ?? true;
+    document.getElementById('setting-include-pinned-tabs').checked =
+      this.settings.includePinnedTabs === true;
+    document.getElementById('setting-include-audible-tabs').checked =
+      this.settings.includeAudibleTabs !== false;
 
     // Apply styles to options page itself
     this._applyStyles();
@@ -71,17 +84,34 @@ class OptionsController {
 
   /** Apply styling variables to DocumentElement */
   _applyStyles() {
-    // Theme switching
-    if (this.settings.theme === 'light') {
-      document.documentElement.classList.add('theme-light');
-    } else {
-      document.documentElement.classList.remove('theme-light');
-    }
+    this.settings = applyAppearance(
+      document.documentElement,
+      this.settings,
+      this._colorSchemeQuery.matches
+    );
+    this._updateAppearancePreview();
+  }
 
-    // Custom card opacity
-    const opacityVal = this.settings.customCardOpacity ?? 75;
-    const opacity = opacityVal / 100;
-    document.documentElement.style.setProperty('--custom-card-opacity', opacity.toFixed(2));
+  _syncAppearanceControls() {
+    document.getElementById('setting-theme').value = this.settings.theme;
+    document.getElementById('setting-density').value = this.settings.density;
+    document.getElementById('setting-default-group-width').value =
+      String(this.settings.defaultGroupWidth);
+    document.getElementById('setting-tab-url-mode').value = this.settings.tabUrlMode;
+    document.getElementById('setting-bg-opacity').value = this.settings.customCardOpacity;
+    document.getElementById('bg-opacity-val').textContent =
+      `${this.settings.customCardOpacity}%`;
+    document.getElementById('setting-font-scale').value = this.settings.fontScale;
+    document.getElementById('font-scale-val').textContent = `${this.settings.fontScale}%`;
+    document.getElementById('setting-favicon-size').value = this.settings.faviconSize;
+    document.getElementById('favicon-size-val').textContent =
+      `${this.settings.faviconSize} px`;
+  }
+
+  _updateAppearancePreview() {
+    const preview = document.getElementById('appearance-preview');
+    preview.dataset.density = this.settings.density;
+    preview.dataset.tabUrlMode = this.settings.tabUrlMode;
   }
 
   /** Bind all event handlers */
@@ -91,18 +121,52 @@ class OptionsController {
       this.settings.theme = e.target.value;
       this._saveSettings();
     });
+    document.getElementById('setting-density').addEventListener('change', (e) => {
+      this.settings.density = e.target.value;
+      this._saveSettings();
+    });
+    document.getElementById('setting-default-group-width').addEventListener('change', (e) => {
+      this.settings.defaultGroupWidth = Number(e.target.value);
+      this._saveSettings();
+    });
+    document.getElementById('setting-tab-url-mode').addEventListener('change', (e) => {
+      this.settings.tabUrlMode = e.target.value;
+      this._saveSettings();
+    });
 
     // Card Opacity Slider
     const opacityInput = document.getElementById('setting-bg-opacity');
     const opacityValSpan = document.getElementById('bg-opacity-val');
     opacityInput.addEventListener('input', (e) => {
       opacityValSpan.textContent = e.target.value + '%';
-      const opacity = parseInt(e.target.value) / 100;
-      document.documentElement.style.setProperty('--custom-card-opacity', opacity.toFixed(2));
+      this.settings.customCardOpacity = parseInt(e.target.value, 10);
+      this._applyStyles();
     });
     opacityInput.addEventListener('change', (e) => {
-      this.settings.customCardOpacity = parseInt(e.target.value);
+      this.settings.customCardOpacity = parseInt(e.target.value, 10);
       this._saveSettings();
+    });
+
+    const fontInput = document.getElementById('setting-font-scale');
+    fontInput.addEventListener('input', (e) => {
+      this.settings.fontScale = parseInt(e.target.value, 10);
+      document.getElementById('font-scale-val').textContent = `${e.target.value}%`;
+      this._applyStyles();
+    });
+    fontInput.addEventListener('change', () => this._saveSettings());
+
+    const faviconInput = document.getElementById('setting-favicon-size');
+    faviconInput.addEventListener('input', (e) => {
+      this.settings.faviconSize = parseInt(e.target.value, 10);
+      document.getElementById('favicon-size-val').textContent = `${e.target.value} px`;
+      this._applyStyles();
+    });
+    faviconInput.addEventListener('change', () => this._saveSettings());
+
+    document.getElementById('btn-reset-appearance').addEventListener('click', async () => {
+      this.settings = { ...this.settings, ...APPEARANCE_DEFAULTS };
+      this._syncAppearanceControls();
+      await this._saveSettings();
     });
 
     // Startup toggle
@@ -111,8 +175,18 @@ class OptionsController {
       this._saveSettings();
     });
 
-    document.getElementById('setting-show-tab-urls').addEventListener('change', (e) => {
-      this.settings.showTabUrls = e.target.checked;
+    document.getElementById('setting-include-pinned-tabs').addEventListener('change', (e) => {
+      this.settings.includePinnedTabs = e.target.checked;
+      this._saveSettings();
+    });
+
+    document.getElementById('setting-include-audible-tabs').addEventListener('change', (e) => {
+      this.settings.includeAudibleTabs = e.target.checked;
+      this._saveSettings();
+    });
+
+    document.getElementById('setting-focus-restored-tab').addEventListener('change', (e) => {
+      this.settings.focusRestoredTab = e.target.checked;
       this._saveSettings();
     });
 
@@ -130,6 +204,18 @@ class OptionsController {
 
     // Delete All
     document.getElementById('btn-delete-all').addEventListener('click', () => this._deleteAll());
+
+    // Refresh the overview when the user returns from the Dashboard.
+    window.addEventListener('focus', () => {
+      this._loadStatistics();
+      this._loadSyncStatus();
+    });
+    this._colorSchemeQuery.addEventListener('change', () => {
+      if (this.settings.theme === 'system') this._applyStyles();
+    });
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes[SYNC_STATUS_KEY]) this._loadSyncStatus();
+    });
   }
 
   /** Export all data to JSON file */
@@ -164,6 +250,7 @@ class OptionsController {
 
       await db.importAll(data);
       const synced = await this._syncDataAndRefresh();
+      await this._loadStatistics();
       this._showToast(
         chrome.i18n.getMessage(synced ? 'importSuccess' : 'syncQuotaError'),
         synced ? 'success' : 'error'
@@ -184,6 +271,7 @@ class OptionsController {
     try {
       await db.clearAll();
       const synced = await this._syncDataAndRefresh();
+      await this._loadStatistics();
       this._showToast(
         chrome.i18n.getMessage(synced ? 'deleteAllSuccess' : 'syncQuotaError'),
         synced ? 'success' : 'error'
@@ -195,9 +283,87 @@ class OptionsController {
   }
 
   async _syncDataAndRefresh() {
+    const groups = await db.getAllGroups();
+    await chrome.storage.local.set({
+      [CONTEXT_MENU_GROUPS_KEY]: groups.map(group => ({
+        id: group.id,
+        name: group.name,
+        locked: group.locked === true,
+        order: Number(group.order) || 0
+      }))
+    });
     const synced = await this.sync.pushNow();
     chrome.runtime.sendMessage({ type: 'DATA_CHANGED' }).catch(() => {});
     return synced;
+  }
+
+  /** Load a compact local overview without sending analytics anywhere. */
+  async _loadStatistics() {
+    try {
+      const [counts, groups] = await Promise.all([
+        db.getCounts(),
+        db.getAllGroups()
+      ]);
+      const average = counts.groups > 0
+        ? (counts.tabs / counts.groups).toFixed(1)
+        : '0';
+      const validDates = groups
+        .map(group => Number(group.createdAt))
+        .filter(Number.isFinite);
+      const oldestTimestamp = validDates.length > 0
+        ? Math.min(...validDates)
+        : null;
+      const oldest = oldestTimestamp
+        ? new Intl.DateTimeFormat('en', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          }).format(new Date(oldestTimestamp))
+        : '—';
+
+      document.getElementById('settings-stat-tabs').textContent = counts.tabs;
+      document.getElementById('settings-stat-groups').textContent = counts.groups;
+      document.getElementById('settings-stat-average').textContent = average;
+      document.getElementById('settings-stat-oldest').textContent = oldest;
+    } catch (error) {
+      console.warn('[Options] Failed to load statistics:', error);
+    }
+  }
+
+  async _loadSyncStatus() {
+    try {
+      const [local, bytesInUse] = await Promise.all([
+        chrome.storage.local.get(SYNC_STATUS_KEY),
+        chrome.storage.sync.getBytesInUse(null)
+      ]);
+      const lastSuccessfulSyncAt = Number(
+        local[SYNC_STATUS_KEY]?.lastSuccessfulSyncAt
+      );
+      const lastSync = lastSuccessfulSyncAt > 0
+        ? new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+          }).format(new Date(lastSuccessfulSyncAt))
+        : (chrome.i18n.getMessage('settingsSyncNotYet') || 'Not yet');
+
+      const quotaBytes = Number(chrome.storage.sync.QUOTA_BYTES) || 102400;
+      const usedBytes = Math.max(0, Number(bytesInUse) || 0);
+      const percent = Math.min(100, (usedBytes / quotaBytes) * 100);
+      const formatKb = bytes => {
+        const value = bytes / 1024;
+        return value >= 10 ? value.toFixed(0) : value.toFixed(1);
+      };
+
+      document.getElementById('settings-last-sync').textContent = lastSync;
+      document.getElementById('settings-sync-quota').textContent =
+        `${formatKb(usedBytes)} KB / ${formatKb(quotaBytes)} KB`;
+      document.getElementById('settings-sync-quota-fill').style.width = `${percent.toFixed(1)}%`;
+      const meter = document.getElementById('settings-sync-quota-meter');
+      meter.setAttribute('aria-valuenow', percent.toFixed(1));
+      meter.title = `${percent.toFixed(1)}%`;
+    } catch (error) {
+      console.warn('[Options] Failed to load sync status:', error);
+    }
   }
 
   /** Show toast notification */

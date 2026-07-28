@@ -11,7 +11,7 @@ body:
     id: tabel-version
     attributes:
       label: Tabel version
-      placeholder: "1.4.0"
+      placeholder: "1.6.0"
     validations:
       required: true
 

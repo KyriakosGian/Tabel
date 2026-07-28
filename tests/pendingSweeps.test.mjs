@@ -64,3 +64,18 @@ test('an invalid sweep id cannot remove storage data', async () => {
   );
   assert.deepEqual(storage.data, { settings: { theme: 'dark' } });
 });
+
+test('a context menu capture can be acknowledged after it is stored', async () => {
+  const key = 'tabel_pending_sweep_context_saved';
+  const storage = createStorage({
+    [key]: {
+      id: 'context_saved',
+      timestamp: 1,
+      source: 'contextMenu',
+      tabs: [{ url: 'https://example.com' }]
+    }
+  });
+
+  await acknowledgePendingSweep('context_saved', storage.area);
+  assert.equal(key in storage.data, false);
+});
