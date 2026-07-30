@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.1, 2026-07-30
+
+- Preserved the configured public manifest key in downloadable ZIP packages.
+- Fixed cross-device synchronization for unpacked installations by keeping a stable extension ID.
+- Added release checks that prevent packages with a missing or changed public key.
+
 ## 1.6.0, 2026-07-29
 
 - Stopped storing and synchronizing external favicon URLs.

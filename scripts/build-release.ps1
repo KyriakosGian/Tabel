@@ -27,17 +27,6 @@ try {
     Copy-Item -LiteralPath (Join-Path $projectRoot $directory) -Destination $stageRoot -Recurse
   }
 
-  # The Web Store assigns the production public key on the first upload.
-  $releaseManifestPath = Join-Path $stageRoot 'manifest.json'
-  $releaseManifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $releaseManifestPath | ConvertFrom-Json
-  $releaseManifest.PSObject.Properties.Remove('key')
-  $releaseJson = $releaseManifest | ConvertTo-Json -Depth 20
-  [IO.File]::WriteAllText(
-    $releaseManifestPath,
-    $releaseJson,
-    [Text.UTF8Encoding]::new($false)
-  )
-
   if (Test-Path -LiteralPath $archivePath) {
     Remove-Item -LiteralPath $archivePath -Force
   }
@@ -73,8 +62,12 @@ try {
     } finally {
       $reader.Dispose()
     }
-    if ($packedManifest.PSObject.Properties.Name -contains 'key') {
-      throw 'Release manifest must not contain a development key.'
+    if (
+      -not ($packedManifest.PSObject.Properties.Name -contains 'key') -or
+      [string]::IsNullOrWhiteSpace($packedManifest.key) -or
+      $packedManifest.key -ne $manifest.key
+    ) {
+      throw 'Release manifest must preserve the configured public key.'
     }
   } finally {
     $archive.Dispose()

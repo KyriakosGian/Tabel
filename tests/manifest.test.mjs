@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,6 +16,21 @@ test('manifest uses Manifest V3 and references existing files', () => {
   for (const iconPath of Object.values(manifest.icons)) {
     assert.equal(existsSync(join(projectRoot, iconPath)), true, `Missing ${iconPath}`);
   }
+});
+
+test('manifest keeps the temporary public key and stable unpacked extension ID', () => {
+  assert.equal(typeof manifest.key, 'string');
+  assert.ok(manifest.key.length > 0);
+
+  const digest = createHash('sha256')
+    .update(Buffer.from(manifest.key, 'base64'))
+    .digest('hex')
+    .slice(0, 32);
+  const extensionId = [...digest]
+    .map(character => 'abcdefghijklmnop'[Number.parseInt(character, 16)])
+    .join('');
+
+  assert.equal(extensionId, 'hhhgchfkhobkclohilomklchgofddadc');
 });
 
 test('localized manifest metadata respects Chrome Web Store limits', () => {

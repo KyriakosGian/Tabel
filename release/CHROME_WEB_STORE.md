@@ -1,4 +1,4 @@
-# Tabel 1.6.0, Chrome Web Store release material
+# Tabel 1.6.1, Chrome Web Store release material
 
 ## URLs
 
@@ -86,9 +86,9 @@ Data use:
 
 Certify every applicable Limited Use statement in the Privacy practices tab.
 
-## Version 1.6.0 release notes
+## Version 1.6.1 release notes
 
-Tabel 1.6.0 adds selective tab saving, context menu commands, expanded appearance controls, local statistics, and sync status. It also improves URL deduplication, removes stored external favicon URLs, and safely cleans old acknowledged deletion records.
+Tabel 1.6.1 fixes cross-device synchronization for manually installed packages by preserving a stable extension ID.
 
 ## Distribution
 
@@ -110,11 +110,11 @@ Run:
 npm run build:release
 ```
 
-Upload the generated ZIP from `dist/`. The package excludes tests, documentation, release files, and the development `key` value.
+Upload the generated ZIP from `dist/`. The package excludes tests, documentation, and release files. The configured public manifest key is preserved so unpacked installations share a stable extension ID.
 
-The GitHub release workflow runs for a version tag such as `v1.6.0`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
+The GitHub release workflow runs for a version tag such as `v1.6.1`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
 
-After the first Store upload, open Package, select View public key, and copy the Store public key into the source manifest only if local development must use the same extension ID.
+Before the first Chrome Web Store submission, create the Store item as a draft, open Package, select View public key, and replace the temporary source manifest key with the official Store public key. Rebuild and verify that the unpacked extension ID matches the Store Item ID before publishing.
 
 ## Publisher actions
 

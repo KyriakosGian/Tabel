@@ -130,7 +130,8 @@ test('release material and reproducible package builder are present', () => {
   assert.ok(read('release/CHROME_WEB_STORE.md').startsWith(`# Tabel ${version},`));
 
   const buildScript = read('scripts/build-release.ps1');
-  assert.match(buildScript, /Properties\.Remove\('key'\)/);
+  assert.doesNotMatch(buildScript, /Properties\.Remove\('key'\)/);
+  assert.match(buildScript, /Release manifest must preserve the configured public key/);
   assert.match(buildScript, /Release archive contains non-runtime files/);
   assert.match(buildScript, /'styles'/);
   assert.match(buildScript, /styles\/tabel\.css/);
