@@ -147,6 +147,10 @@
     "message": "Data imported successfully!",
     "description": "Import success message"
   },
+  "confirmImport": {
+    "message": "Import replaces your saved groups and tabs on this device and syncs the changes to your other devices. Export a backup first if you want to keep your current data. Continue?",
+    "description": "Confirmation before replacing saved data"
+  },
   "importError": {
     "message": "Error importing data.",
     "description": "Import error message"
@@ -532,7 +536,7 @@
     "description": "Link context menu item"
   },
   "syncQuotaError": {
-    "message": "Sync storage is full. Some groups may not sync across devices.",
+    "message": "Sync could not complete. Your data remains saved on this device. Check sync storage usage in Settings and your Chrome sync settings.",
     "description": "Shown when chrome.storage.sync quota is exceeded"
   }
 }

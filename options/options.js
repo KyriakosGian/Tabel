@@ -5,6 +5,7 @@
  */
 
 import { db } from '../dashboard/lib/db.js';
+import { validateData } from '../dashboard/lib/validateData.js';
 import { SyncManager, SYNC_STATUS_KEY } from '../dashboard/lib/sync.js';
 import {
   applyAppearance,
@@ -13,6 +14,7 @@ import {
 } from '../dashboard/lib/appearance.js';
 
 const CONTEXT_MENU_GROUPS_KEY = 'tabelContextMenuGroups';
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
 class OptionsController {
   constructor() {
@@ -241,12 +243,12 @@ class OptionsController {
   /** Import data from JSON file */
   async _importData(file) {
     try {
+      if (!file || file.size > MAX_IMPORT_BYTES) throw new Error('Import file is too large');
       const text = await file.text();
       const data = JSON.parse(text);
 
-      if (!Array.isArray(data.groups) || !Array.isArray(data.items)) {
-        throw new Error('Invalid format');
-      }
+      validateData(data);
+      if (!confirm(chrome.i18n.getMessage('confirmImport'))) return;
 
       await db.importAll(data);
       const synced = await this._syncDataAndRefresh();

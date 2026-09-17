@@ -142,8 +142,8 @@ test('Dashboard saves selected tabs, then closes the browser tabs after persiste
     dashboardSource.indexOf('await closeCapturedTabs(chrome.tabs, capturedBrowserTabs)')
   );
   assert.match(dbSource, /async addTabsToGroup\(groupId, tabs = \[\]\)/);
-  assert.match(dbSource, /async _prependItems\(groupId, tabs, currentTabs\)/);
-  assert.match(dbSource, /preserveGroupId: groupId/);
+  assert.match(dbSource, /_replaceCapturedUrls\(data, uniqueTabs, groupId, now\)/);
+  assert.doesNotMatch(dbSource, /async _prependItems/);
   assert.match(optionsHtml, /id="setting-include-pinned-tabs"/);
   assert.match(optionsHtml, /id="setting-include-audible-tabs"/);
 });

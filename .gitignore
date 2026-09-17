@@ -32,3 +32,11 @@ dist/
 # Local extension packages and private signing keys
 *.crx
 *.pem
+*.p12
+*.pfx
+*.key
+.env
+.env.*
+
+# Personal Tabel backups
+tabel-backup-*.json

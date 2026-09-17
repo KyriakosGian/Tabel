@@ -93,7 +93,7 @@ test('privacy policies disclose storage, synchronization, and Limited Use', () =
   assert.match(html, /chrome\.storage\.local/);
   assert.match(html, /chrome\.storage\.sync/);
   assert.match(html, /Limited Use/i);
-  assert.match(html, /July 29, 2026/);
+  assert.match(html, /September 17, 2026/);
   assert.match(html, /favicon API/i);
   assert.match(html, /not stored or synchronized/i);
 });
@@ -146,5 +146,8 @@ test('release material and reproducible package builder are present', () => {
 
   const gitignore = read('.gitignore');
   assert.match(gitignore, /\*\.pem/);
+  assert.match(gitignore, /\*\.p12/);
+  assert.match(gitignore, /\.env\.\*/);
+  assert.match(gitignore, /tabel-backup-\*\.json/);
   assert.match(gitignore, /dist\//);
 });

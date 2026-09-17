@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.0, 2026-09-17
+
+- Adopted the official Chrome Web Store public key and extension ID.
+- Added migration instructions for the separate storage used by earlier test installations.
+- Made capture, import, and sync merges atomic to avoid partial saves and overlapping database writes.
+- Serialized sync operations within and across open extension pages.
+- Measured sync chunks by UTF-8 size, including JSON escaping, to respect per-item storage limits.
+- Validated imported and synchronized records before database changes.
+- Added confirmation before replacing saved data through import and a 5 MB import limit.
+- Restricted restored addresses to supported HTTP, HTTPS, and file URLs.
+- Updated privacy disclosures, support guidance, and Store listing material.
+- Removed unused database helpers and expanded regression coverage.
+
 ## 1.6.1, 2026-07-30
 
 - Preserved the configured public manifest key in downloadable ZIP packages.

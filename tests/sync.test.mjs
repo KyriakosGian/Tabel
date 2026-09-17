@@ -6,6 +6,17 @@ globalThis.indexedDB = { open: () => ({}) };
 const { db } = await import('../dashboard/lib/db.js');
 const { SyncManager } = await import('../dashboard/lib/sync.js');
 
+test('chunks round-trip Unicode and escaped text within the storage byte quota', () => {
+  const manager = new SyncManager();
+  const payload = JSON.stringify({ text: '\u6f22\u03b1\ud83d\ude00"\\\n'.repeat(6000) });
+  const chunks = manager._chunk(payload);
+  assert.equal(chunks.join(''), payload);
+  for (const [index, chunk] of chunks.entries()) {
+    const size = Buffer.byteLength(`tabel_sync_chunk_${index}`) + Buffer.byteLength(JSON.stringify(chunk));
+    assert.ok(size <= 8192, `Chunk ${index} uses ${size} bytes`);
+  }
+});
+
 test('pushNow includes tombstones and writes a valid chunked snapshot', async () => {
   let written = null;
   let localWritten = null;

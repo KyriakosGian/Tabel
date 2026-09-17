@@ -4,7 +4,7 @@
  * (which is backed by the user's own Google account).
  *
  * chrome.storage.sync constraints we work around:
- *   - QUOTA_BYTES_PER_ITEM = 8,192 bytes  → we chunk the payload (< 7KB/chunk)
+ *   - QUOTA_BYTES_PER_ITEM = 8,192 bytes  → chunks use at most 8,000 bytes
  *   - QUOTA_BYTES (total)   = 102,400 bytes
  *   - MAX_ITEMS             = 512 keys
  *
@@ -24,9 +24,8 @@ const DEVICE_ID_KEY = 'tabelDeviceId';
 export const DEVICE_STATE_PREFIX = 'tabel_sync_device_';
 export const SYNC_STATUS_KEY = 'tabelSyncStatus';
 
-// 3500 UTF-16 code units → ≤ 7000 bytes in the worst case (2 bytes/char for
-// Greek/BMP text), comfortably under the 8192-byte per-item quota.
-const MAX_CHUNK_CHARS = 3500;
+// Include the storage key and JSON escaping in the UTF-8 byte budget.
+const MAX_CHUNK_BYTES = 8000;
 const PUSH_DEBOUNCE_MS = 2000;
 const DEVICE_HEARTBEAT_MS = 24 * 60 * 60 * 1000;
 // Coalesce bursts of remote change events (e.g. chunks arriving separately over a
@@ -44,7 +43,7 @@ export class SyncManager {
     this.deviceId = null;
     this._pushTimer = null;
     this._pullTimer = null;
-    this._applyingRemote = false;
+    this._operations = Promise.resolve();
   }
 
   /** Set up the device id, do an initial pull, and listen for remote changes. */
@@ -53,12 +52,15 @@ export class SyncManager {
 
     const hadRemote = await this.pull();
     if (!hadRemote) {
+      const remote = await chrome.storage.sync.get(SYNC_META_KEY);
       // Cloud is empty — seed it with whatever we have locally.
       const data = await db.exportAll();
       if (
-        data.groups.length > 0 ||
-        data.items.length > 0 ||
-        data.tombstones.length > 0
+        !remote[SYNC_META_KEY] && (
+          data.groups.length > 0 ||
+          data.items.length > 0 ||
+          data.tombstones.length > 0
+        )
       ) {
         this.schedulePush();
       }
@@ -97,8 +99,20 @@ export class SyncManager {
   }
 
   /** Serialize local data, chunk it, and write it to chrome.storage.sync. */
-  async push() {
-    if (this._applyingRemote) return; // don't echo freshly-merged remote data back
+  push() {
+    return this._enqueue(() => this._push());
+  }
+
+  _enqueue(operation) {
+    const run = () => globalThis.navigator?.locks
+      ? navigator.locks.request('tabel-sync', operation)
+      : operation();
+    const pending = this._operations.then(run, run);
+    this._operations = pending.catch(() => {});
+    return pending;
+  }
+
+  async _push() {
     try {
       const existing = await chrome.storage.sync.get(null);
       const data = await db.exportAll();
@@ -167,16 +181,23 @@ export class SyncManager {
    * Read remote chunks, reassemble, and merge into the local DB.
    * @returns {boolean} true if remote data existed and was applied.
    */
-  async pull() {
+  pull() {
+    return this._enqueue(() => this._pull());
+  }
+
+  async _pull() {
     try {
       const all = await chrome.storage.sync.get(null);
       const meta = all[SYNC_META_KEY];
-      if (!meta || !meta.chunkCount) return false;
+      if (!meta) return false;
+      if (!Number.isInteger(meta.chunkCount) || meta.chunkCount < 1 || meta.chunkCount > 512) {
+        throw new Error('Invalid sync metadata');
+      }
 
       let payload = '';
       for (let i = 0; i < meta.chunkCount; i++) {
         const part = all[CHUNK_PREFIX + i];
-        if (part === undefined) {
+        if (typeof part !== 'string') {
           // A chunk is still propagating — bail and retry on the next change event.
           console.warn('[Sync] Missing chunk', i, '— skipping this pull');
           return false;
@@ -186,9 +207,7 @@ export class SyncManager {
 
       const remoteData = JSON.parse(payload);
 
-      this._applyingRemote = true;
       const result = await db.mergeAll(remoteData);
-      this._applyingRemote = false;
 
       const localData = await db.exportAll();
       const now = Date.now();
@@ -230,7 +249,6 @@ export class SyncManager {
       await this._recordSuccess('pull', now);
       return true;
     } catch (e) {
-      this._applyingRemote = false;
       console.error('[Sync] Pull failed:', e);
       return false;
     }
@@ -238,11 +256,22 @@ export class SyncManager {
 
   /** Split a string into chunks small enough for the per-item quota. */
   _chunk(str) {
+    const encoder = new TextEncoder();
     const chunks = [];
-    for (let i = 0; i < str.length; i += MAX_CHUNK_CHARS) {
-      chunks.push(str.slice(i, i + MAX_CHUNK_CHARS));
+    let chunk = '';
+    let bytes = encoder.encode(CHUNK_PREFIX + '0').length + 2;
+    for (const character of str) {
+      const size = encoder.encode(JSON.stringify(character)).length - 2;
+      if (bytes + size > MAX_CHUNK_BYTES) {
+        chunks.push(chunk);
+        chunk = '';
+        bytes = encoder.encode(CHUNK_PREFIX + chunks.length).length + 2;
+      }
+      chunk += character;
+      bytes += size;
     }
-    return chunks.length ? chunks : [''];
+    if (chunk || !chunks.length) chunks.push(chunk);
+    return chunks;
   }
 
   _deviceStateKey(deviceId) {

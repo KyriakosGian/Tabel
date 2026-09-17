@@ -18,7 +18,7 @@ test('manifest uses Manifest V3 and references existing files', () => {
   }
 });
 
-test('manifest keeps the temporary public key and stable unpacked extension ID', () => {
+test('manifest public key matches the official Chrome Web Store item ID', () => {
   assert.equal(typeof manifest.key, 'string');
   assert.ok(manifest.key.length > 0);
 
@@ -30,7 +30,7 @@ test('manifest keeps the temporary public key and stable unpacked extension ID',
     .map(character => 'abcdefghijklmnop'[Number.parseInt(character, 16)])
     .join('');
 
-  assert.equal(extensionId, 'hhhgchfkhobkclohilomklchgofddadc');
+  assert.equal(extensionId, 'hmdklfckhfiobokdglandjdndgaefngd');
 });
 
 test('localized manifest metadata respects Chrome Web Store limits', () => {

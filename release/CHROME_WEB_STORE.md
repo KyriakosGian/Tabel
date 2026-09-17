@@ -1,4 +1,4 @@
-# Tabel 1.6.1, Chrome Web Store release material
+# Tabel 2.0.0, Chrome Web Store release material
 
 ## URLs
 
@@ -39,6 +39,8 @@ Key features:
 
 Tabel uses no Tabel account, advertisements, remote code, or developer-operated server.
 
+Chrome synchronization requires the same Google Account with Chrome sync enabled on each device. Approximately 100 KB is available for saved data, deletion records, and sync metadata. If this limit is reached, your saved tabs remain available locally. Export JSON backups from Settings to keep an additional copy.
+
 ## Single purpose
 
 Tabel organizes a user's open tabs into saved groups so they can be searched, sorted, synchronized, and restored.
@@ -47,7 +49,7 @@ Tabel organizes a user's open tabs into saved groups so they can be searched, so
 
 ### tabs
 
-Required when the user clicks the Tabel action, uses Save Tabs in the Dashboard, or selects a Tabel context menu command. It reads only the URL and title of tabs selected by the user. It also creates tabs when the user restores saved pages.
+Required when the user clicks the Tabel action, uses Save Tabs in the Dashboard, or selects a Tabel context menu command. Save Tabs reads URLs and titles of open tabs to display the selection list. Only chosen tabs or links are retained. Saved URLs are also used when restoring pages.
 
 ### storage
 
@@ -71,7 +73,7 @@ All JavaScript, CSS, HTML, icons, and locale files are included in the extension
 
 Declare:
 
-- Web browsing activity, specifically URLs and page titles selected by the user through the Sweep action, Dashboard, or context menu.
+- Web browsing activity, specifically open-tab URLs and page titles accessed to populate Save Tabs, and URLs and titles retained after the user saves tabs through the Sweep action, Dashboard, or context menu.
 - User-generated content, specifically group names created by the user.
 
 Data use:
@@ -86,9 +88,9 @@ Data use:
 
 Certify every applicable Limited Use statement in the Privacy practices tab.
 
-## Version 1.6.1 release notes
+## Version 2.0.0 release notes
 
-Tabel 1.6.1 fixes cross-device synchronization for manually installed packages by preserving a stable extension ID.
+Tabel 2.0.0 adopts the official Chrome Web Store identity, improves capture and synchronization reliability, and validates backups before replacing saved data.
 
 ## Distribution
 
@@ -100,6 +102,7 @@ Tabel 1.6.1 fixes cross-device synchronization for manually installed packages b
 
 - Store icon: `release/assets/store-icon-128.png`
 - Screenshot: `release/assets/screenshot-dashboard-1280x800.png`
+- Settings screenshot: `docs/assets/settings-preview.png`
 - Small promo tile: `release/assets/promo-tile-440x280.png`
 
 ## Package
@@ -110,11 +113,15 @@ Run:
 npm run build:release
 ```
 
-Upload the generated ZIP from `dist/`. The package excludes tests, documentation, and release files. The configured public manifest key is preserved so unpacked installations share a stable extension ID.
+Upload `dist/tabel-2.0.0-chrome-web-store.zip` as an updated package in the existing Store draft. The package excludes tests, documentation, and release files. The official Store public key is preserved so unpacked installations use the Store extension ID.
 
-The GitHub release workflow runs for a version tag such as `v1.6.1`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
+The GitHub release workflow runs for a version tag such as `v2.0.0`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
 
-Before the first Chrome Web Store submission, create the Store item as a draft, open Package, select View public key, and replace the temporary source manifest key with the official Store public key. Rebuild and verify that the unpacked extension ID matches the Store Item ID before publishing.
+The Store item ID is `hmdklfckhfiobokdglandjdndgaefngd`. Its public key is configured in `manifest.json` and checked by the test suite. The Store listing remains a draft until explicitly submitted for review.
+
+Before replacing or reloading a 1.x test installation, export a JSON backup. Version 2.0.0 uses separate storage and does not automatically inherit its data. Install 2.0.0 from a separate folder and import the backup on the primary computer. Import replaces saved data and can synchronize the replacement to other devices. Verify the groups and tabs before removing the test copy.
+
+Before submission, verify that the screenshots match the final extension and contain only demonstration data. Verify the public privacy and support URLs and disclose that Chrome sync storage is limited to approximately 100 KB across saved data, deletion records, and sync metadata.
 
 ## Publisher actions
 

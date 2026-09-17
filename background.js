@@ -206,14 +206,7 @@ chrome.action.onClicked.addListener(async () => {
     });
 
     // Filter out the dashboard tab, chrome:// pages, and the new tab page
-    const sweepableTabs = tabs.filter(tab =>
-      tab.url &&
-      !tab.url.startsWith('chrome://') &&
-      !tab.url.startsWith('chrome-extension://') &&
-      !tab.url.startsWith('about:') &&
-      !tab.url.startsWith('edge://') &&
-      tab.url !== 'about:blank'
-    );
+    const sweepableTabs = tabs.filter(tab => isSavableUrl(tab.url));
 
     if (sweepableTabs.length === 0) {
       // Nothing to sweep, just open dashboard
@@ -318,6 +311,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     case 'OPEN_TAB':
       (async () => {
         try {
+          if (!isSavableUrl(message.url)) throw new Error('Unsupported URL');
           const tab = await chrome.tabs.create({
             url: message.url,
             active: message.active ?? true
@@ -334,6 +328,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       (async () => {
         const createdTabIds = [];
         try {
+          if (!Array.isArray(message.urls) || !message.urls.every(isSavableUrl)) {
+            throw new Error('Unsupported URLs');
+          }
           // Open sequentially so the response represents the result of every request.
           for (let i = 0; i < message.urls.length; i++) {
             const tab = await chrome.tabs.create({

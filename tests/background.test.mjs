@@ -150,6 +150,25 @@ test('OPEN_TAB reports a Chrome creation failure', async () => {
   assert.match(response.error, /creation blocked/);
 });
 
+test('restore messages reject executable and internal URLs', async () => {
+  let createCalls = 0;
+  const { dispatch } = createHarness(async () => {
+    createCalls += 1;
+    return { id: 1 };
+  });
+
+  for (const message of [
+    { type: 'OPEN_TAB', url: 'javascript:alert(1)' },
+    { type: 'OPEN_TAB', url: 'chrome://settings' },
+    { type: 'OPEN_TABS', urls: ['https://example.com', 'data:text/html,test'] }
+  ]) {
+    const response = await dispatch(message).response;
+    assert.equal(response.success, false);
+    assert.match(response.error, /Unsupported/);
+  }
+  assert.equal(createCalls, 0);
+});
+
 test('OPEN_TABS confirms every tab and preserves the requested activation order', async () => {
   const calls = [];
   const { dispatch } = createHarness(async options => {
