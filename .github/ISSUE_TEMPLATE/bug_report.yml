@@ -11,7 +11,8 @@ body:
     id: tabel-version
     attributes:
       label: Tabel version
-      placeholder: "1.6.0"
+      description: Find the installed version in Tabel's details at chrome://extensions/.
+      placeholder: "Your installed Tabel version"
     validations:
       required: true
 
@@ -19,7 +20,8 @@ body:
     id: chrome-version
     attributes:
       label: Chrome version
-      placeholder: "Chrome 140"
+      description: Find the full Chrome version at chrome://settings/help.
+      placeholder: "Your installed Chrome version"
     validations:
       required: true
 

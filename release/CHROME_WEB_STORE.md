@@ -19,7 +19,7 @@
 
 Tabel organizes open Chrome tabs into clean, synchronized visual groups.
 
-With one click, it saves the non-pinned tabs in the active window, closes the original tabs after safe persistence, and opens the Dashboard. The Dashboard can also save one tab, a custom selection, or eligible tabs from every window, closing them only after persistence succeeds.
+With one click, it saves the non-pinned tabs in the active window, closes the original tabs after safe persistence, and opens the Dashboard. The Dashboard can also save the most recently active eligible tab, a custom selection, or eligible tabs from every window, closing them only after persistence succeeds.
 
 Key features:
 
@@ -37,11 +37,11 @@ Key features:
 - Use System, Light, or Dark theme and three density levels.
 - Adjust font size, favicon size, default group width, and URL display.
 - View local tab and group statistics.
-- View the last successful sync and sync quota usage.
+- View the time of the last successful sync storage operation and sync quota usage.
 
 Tabel uses no Tabel account, advertisements, remote code, or developer-operated server.
 
-Chrome synchronization requires the same Google Account with Chrome sync enabled on each device. Approximately 100 KB is available for saved data, deletion records, and sync metadata. If this limit is reached, your saved tabs remain available locally. Export JSON backups from Settings to keep an additional copy.
+Chrome synchronization requires the same Google Account with Chrome sync enabled on each device. Approximately 100 KB is available for saved data, deletion records, and sync metadata. If this limit is reached, your saved tabs remain available locally. The sync timestamp records a successful storage operation on this device, not confirmation that another device has received the data. Export JSON backups from Settings to keep an additional copy of saved groups and tabs. Extension settings are not included in backups.
 
 ## Single purpose
 
@@ -119,7 +119,7 @@ npm run build:release
 
 The 2.0.0 package is `dist/tabel-2.0.0-chrome-web-store.zip`. It excludes tests, documentation, and release files. The official Store public key is preserved so unpacked installations use the Store extension ID. Documentation-only updates do not require a new package or Store submission.
 
-The GitHub release workflow runs for a version tag such as `v2.0.0`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
+The GitHub release workflow runs when a new version tag is pushed, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release. The tag must be `v` followed by the version in `manifest.json` and `package.json`. Do not reuse an existing release tag.
 
 The published Store item ID is `hmdklfckhfiobokdglandjdndgaefngd`. Its public key is configured in `manifest.json` and checked by the test suite. Preserve this identity for future updates.
 

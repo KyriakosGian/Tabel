@@ -13,7 +13,7 @@ Version 2.0.0. Manifest V3. English interface.
 ## Features
 
 - Save non-pinned tabs from the active window.
-- Save the most recent tab, selected open tabs, or eligible tabs from every window, then close them after successful persistence.
+- Save the most recently active eligible tab, selected open tabs, or eligible tabs from every window, then close them after successful persistence.
 - Add captured tabs to the top of an existing unlocked group.
 - Save a page or link from the Chrome context menu and send a link to a new or existing group.
 - Keep only the newest saved copy when the same URL is captured again.
@@ -23,7 +23,7 @@ Version 2.0.0. Manifest V3. English interface.
 - Customize density, font size, favicon size, default group width, and group layout.
 - Use System, Light, or Dark theme with a live appearance preview.
 - Sync saved groups through `chrome.storage.sync`.
-- View saved-tab statistics, the last successful sync, and current sync quota usage.
+- View saved-tab statistics, the time of the last successful sync storage operation, and current sync quota usage.
 - Import and export JSON backups.
 
 ## Installation
@@ -55,18 +55,18 @@ The test suite uses the built-in `node:test` runner and requires no third-party 
 - `release/` contains the Chrome Web Store copy, graphic assets, and release notes.
 - `npm run build:release` creates a clean Chrome Web Store ZIP in `dist/`.
 - GitHub Actions runs the test suite for every push and pull request.
-- A version tag such as `v2.0.0` creates a GitHub Release and attaches the Store ZIP.
+- Pushing a new version tag creates a GitHub Release and attaches the Store ZIP.
 
 ## Create a release
 
-```bash
+For a future extension update, first set a new version in `manifest.json` and `package.json` and update the changelog and release notes. Run these checks in PowerShell on Windows:
+
+```powershell
 npm test
 npm run build:release
-git tag v2.0.0
-git push origin v2.0.0
 ```
 
-The tag must match the versions in `manifest.json` and `package.json`.
+Commit and push the changes, then create and push a new Git tag with `v` followed by that version. Do not reuse an existing release tag. Documentation-only changes do not require a version change, a new tag, or a new Store package.
 
 ## Project structure
 
@@ -90,6 +90,7 @@ Tabel/
 - IndexedDB stores groups and tabs.
 - `chrome.storage.local` stores settings, privacy consent, sync status, a context-menu group index, and crash-safe pending capture data.
 - `chrome.storage.sync` synchronizes saved groups between installations with the same extension ID and Google Account when Chrome sync is enabled.
+- The Settings label "Last successful sync" reports the last successful operation with Chrome's sync storage on this device. It does not confirm that another device has received the data.
 - Chrome sync provides approximately 100 KB for saved data, deletion records, and sync metadata. Settings shows quota usage. Tabs remain local if a sync write fails.
 - Website icons are rendered through Chrome's favicon API and are not stored or synchronized.
 - The public manifest key identifies the extension. It is not a password or a credential for accessing another user's data.
