@@ -100,8 +100,8 @@ Tabel 2.0.0 adopts the official Chrome Web Store identity, improves capture and 
 
 ## Graphic assets
 
-- Store icon: `release/assets/store-icon-128.png`
-- Screenshot: `release/assets/screenshot-dashboard-1280x800.png`
+- Store icon: `icons/icon128.png`
+- Screenshot: `docs/assets/dashboard-preview.png`
 - Settings screenshot: `docs/assets/settings-preview.png`
 - Small promo tile: `release/assets/promo-tile-440x280.png`
 

@@ -99,9 +99,9 @@ test('privacy policies disclose storage, synchronization, and Limited Use', () =
 });
 
 test('Chrome Web Store graphics have exact required dimensions', () => {
-  assert.deepEqual(pngSize('release/assets/store-icon-128.png'), { width: 128, height: 128 });
+  assert.deepEqual(pngSize('icons/icon128.png'), { width: 128, height: 128 });
   assert.deepEqual(
-    pngSize('release/assets/screenshot-dashboard-1280x800.png'),
+    pngSize('docs/assets/dashboard-preview.png'),
     { width: 1280, height: 800 }
   );
   assert.deepEqual(

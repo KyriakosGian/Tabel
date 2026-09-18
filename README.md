@@ -6,7 +6,7 @@ Version 2.0.0. Manifest V3. English interface.
 
 [Official website](https://kyriakosgian.github.io/Tabel/) | [Report a problem](https://github.com/KyriakosGian/Tabel/issues) | [Releases](https://github.com/KyriakosGian/Tabel/releases)
 
-![Tabel Dashboard](release/assets/screenshot-dashboard-1280x800.png)
+![Tabel Dashboard](docs/assets/dashboard-preview.png)
 
 ![Tabel Settings](docs/assets/settings-preview.png)
 
