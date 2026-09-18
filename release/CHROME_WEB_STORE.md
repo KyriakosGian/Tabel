@@ -2,6 +2,7 @@
 
 ## URLs
 
+- Store: `https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd`
 - Homepage: `https://kyriakosgian.github.io/Tabel/`
 - Privacy policy: `https://kyriakosgian.github.io/Tabel/privacy/`
 - Support: `https://kyriakosgian.github.io/Tabel/support/`
@@ -9,7 +10,8 @@
 ## Listing
 
 - Primary language: English
-- Category: Productivity
+- Category: Productivity, workflow and organization
+- Status: Publicly available, version 2.0.0
 - Name: `Tabel: Tab Manager`
 - Summary: `Organize open tabs into synced visual groups, save memory, and restore them whenever you need.`
 
@@ -73,8 +75,10 @@ All JavaScript, CSS, HTML, icons, and locale files are included in the extension
 
 Declare:
 
-- Web browsing activity, specifically open-tab URLs and page titles accessed to populate Save Tabs, and URLs and titles retained after the user saves tabs through the Sweep action, Dashboard, or context menu.
-- User-generated content, specifically group names created by the user.
+- Web history, specifically open-tab URLs and page titles accessed to populate Save Tabs, and URLs and titles retained after the user saves tabs through the extension action, Dashboard, or context menu.
+- Website content, specifically hyperlinks saved through Save this link.
+
+The privacy policy also discloses user-created group names, sorting choices, and display preferences. Tabel does not continuously record browsing history or read full webpage content.
 
 Data use:
 
@@ -113,19 +117,18 @@ Run:
 npm run build:release
 ```
 
-Upload `dist/tabel-2.0.0-chrome-web-store.zip` as an updated package in the existing Store draft. The package excludes tests, documentation, and release files. The official Store public key is preserved so unpacked installations use the Store extension ID.
+The 2.0.0 package is `dist/tabel-2.0.0-chrome-web-store.zip`. It excludes tests, documentation, and release files. The official Store public key is preserved so unpacked installations use the Store extension ID. Documentation-only updates do not require a new package or Store submission.
 
 The GitHub release workflow runs for a version tag such as `v2.0.0`, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release.
 
-The Store item ID is `hmdklfckhfiobokdglandjdndgaefngd`. Its public key is configured in `manifest.json` and checked by the test suite. The Store listing remains a draft until explicitly submitted for review.
+The published Store item ID is `hmdklfckhfiobokdglandjdndgaefngd`. Its public key is configured in `manifest.json` and checked by the test suite. Preserve this identity for future updates.
 
 Before submission, verify that the screenshots match the final extension and contain only demonstration data. Verify the public privacy and support URLs and disclose that Chrome sync storage is limited to approximately 100 KB across saved data, deletion records, and sync metadata.
 
-## Publisher actions
+## Future extension updates
 
-1. Create or access the Chrome Web Store developer account.
-2. Enable two-step verification.
-3. Pay the one-time registration fee.
-4. Declare Trader or Non-Trader status and complete any required verification.
-5. Upload the ZIP and complete the Store listing.
-6. Submit the extension for review.
+1. Update the version in `manifest.json` and `package.json`, and document the changes.
+2. Run the tests and build the release package.
+3. Upload the new package to the existing Store item, preserving its ID and public key.
+4. Update the Store listing and privacy disclosures if the behavior has changed.
+5. Submit the update for review and choose automatic or manual publication.

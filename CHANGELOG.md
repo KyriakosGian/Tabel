@@ -2,6 +2,7 @@
 
 ## 2.0.0, 2026-09-17
 
+- Now available publicly on the [Chrome Web Store](https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd). Installation links and documentation now point to the Store. The extension package is unchanged.
 - Adopted the official Chrome Web Store public key and extension ID.
 - Added migration instructions for the separate storage used by earlier test installations.
 - Made capture, import, and sync merges atomic to avoid partial saves and overlapping database writes.

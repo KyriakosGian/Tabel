@@ -93,6 +93,32 @@ test('privacy policies disclose storage, synchronization, and Limited Use', () =
   assert.match(html, /not stored or synchronized/i);
 });
 
+test('public installation links point to the published Chrome Web Store item', () => {
+  const storeUrl = 'https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd';
+  const version = JSON.parse(read('manifest.json')).version;
+
+  for (const file of [
+    'README.md',
+    'docs/index.html',
+    'docs/support/index.html',
+    'CHANGELOG.md',
+    'release/CHROME_WEB_STORE.md',
+    `release/notes/${version}.md`
+  ]) {
+    const content = read(file);
+    assert.ok(content.includes(storeUrl), `${file} is missing the Store link`);
+    assert.doesNotMatch(content, /coming soon|remains unpublished|remains a draft/i);
+  }
+
+  const buttons = [...read('docs/index.html').matchAll(/<a class="button button--primary" href="([^"]+)">([^<]+)<\/a>/g)];
+  assert.equal(buttons.length, 3);
+  for (const [, href, label] of buttons) {
+    assert.equal(href, storeUrl);
+    assert.equal(label, 'Add to Chrome');
+  }
+  assert.match(read('README.md'), /## Development\s+Local installation is intended for development and testing\./);
+});
+
 test('Chrome Web Store graphics have exact required dimensions', () => {
   assert.deepEqual(pngSize('icons/icon128.png'), { width: 128, height: 128 });
   assert.deepEqual(
