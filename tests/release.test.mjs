@@ -61,7 +61,6 @@ test('public project copy and extension interface are English only', () => {
 test('GitHub Pages homepage provides a complete one-page presentation', () => {
   const html = read('docs/index.html');
   const version = JSON.parse(read('manifest.json')).version;
-  const downloadUrl = `https://github.com/KyriakosGian/Tabel/releases/download/v${version}/tabel-${version}-chrome-web-store.zip`;
 
   assert.match(html, /id="features"/);
   assert.match(html, /id="how-it-works"/);
@@ -70,10 +69,6 @@ test('GitHub Pages homepage provides a complete one-page presentation', () => {
   assert.match(html, /dashboard-preview\.png/);
   assert.match(html, /settings-preview\.png/);
   assert.ok(html.includes(`Version ${version}`));
-  assert.ok(html.includes(downloadUrl));
-  assert.match(html, /chrome:\/\/extensions\//);
-  assert.match(html, /Load unpacked/);
-  assert.match(html, /manifest\.json/);
   assert.match(html, /reducing the memory used by your browser and computer/i);
   assert.match(
     html,

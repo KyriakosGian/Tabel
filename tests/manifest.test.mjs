@@ -48,6 +48,6 @@ test('manifest and README use the final public project URLs', () => {
 
   const readme = readFileSync(join(projectRoot, 'README.md'), 'utf8');
   assert.match(readme, /github\.com\/KyriakosGian\/Tabel/);
-  assert.doesNotMatch(readme, /GITHUB_USER|REPOSITORY|yourusername/i);
+  assert.doesNotMatch(readme, /https?:\/\/[^\s)]*(?:GITHUB_USER|REPOSITORY|yourusername)/i);
   assert.equal(manifest.permissions.includes('activeTab'), false);
 });

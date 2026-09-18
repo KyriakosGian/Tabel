@@ -278,10 +278,6 @@ h1 {
   counter-reset: steps;
 }
 
-.steps--installation {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
 .step {
   position: relative;
   padding: 28px 24px 24px;
@@ -306,10 +302,6 @@ h1 {
 .step p {
   margin: 0;
   color: var(--muted);
-}
-
-.step code {
-  color: #c7d2fe;
 }
 
 .faq {

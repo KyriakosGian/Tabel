@@ -26,26 +26,20 @@ Version 2.0.0. Manifest V3. English interface.
 - View saved-tab statistics, the last successful sync, and current sync quota usage.
 - Import and export JSON backups.
 
-## Local installation
+## Installation
 
-1. Download the [Tabel 2.0.0 ZIP](https://github.com/KyriakosGian/Tabel/releases/download/v2.0.0/tabel-2.0.0-chrome-web-store.zip) and extract it to a permanent folder.
+Coming soon to the Chrome Web Store. The installation link will appear here when the listing is published.
+
+## Development
+
+Local installation is intended for development and testing.
+
+1. Clone this repository or download and extract a package from [GitHub Releases](https://github.com/KyriakosGian/Tabel/releases).
 2. Open `chrome://extensions/` in Chrome and enable Developer mode.
-3. Select Load unpacked.
-4. Select the extracted directory containing `manifest.json`.
+3. Select Load unpacked and choose the directory containing `manifest.json`.
+4. After editing the code, reload the extension from `chrome://extensions/`.
 
-The Chrome Web Store listing is being prepared and is not yet published.
-
-## Upgrading from 1.x
-
-Version 2.0.0 uses the official Chrome Web Store identity. It uses separate storage from the earlier test installations.
-
-1. Before replacing or reloading an older installation, export a JSON backup from its Settings. Back up each computer if they contain different data.
-2. Load 2.0.0 from a separate folder and verify its extension ID is `hmdklfckhfiobokdglandjdndgaefngd`.
-3. Import the backup containing the data you want to keep into 2.0.0 on your primary computer. Import replaces saved data and can synchronize that replacement to other devices.
-4. Install the same version on your other computers, enable Chrome sync with the same Google Account, and check that the saved groups appear.
-5. Remove the old installation only after verifying the new data. Keep your backup.
-
-## Tests
+### Tests
 
 Node.js 22 or later is required.
 

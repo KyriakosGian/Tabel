@@ -119,8 +119,6 @@ The GitHub release workflow runs for a version tag such as `v2.0.0`, rebuilds th
 
 The Store item ID is `hmdklfckhfiobokdglandjdndgaefngd`. Its public key is configured in `manifest.json` and checked by the test suite. The Store listing remains a draft until explicitly submitted for review.
 
-Before replacing or reloading a 1.x test installation, export a JSON backup. Version 2.0.0 uses separate storage and does not automatically inherit its data. Install 2.0.0 from a separate folder and import the backup on the primary computer. Import replaces saved data and can synchronize the replacement to other devices. Verify the groups and tabs before removing the test copy.
-
 Before submission, verify that the screenshots match the final extension and contain only demonstration data. Verify the public privacy and support URLs and disclose that Chrome sync storage is limited to approximately 100 KB across saved data, deletion records, and sync metadata.
 
 ## Publisher actions
