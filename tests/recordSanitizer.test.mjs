@@ -17,3 +17,11 @@ test('legacy favicon URLs are removed without mutating the source record', () =>
   assert.equal(original.favIconUrl, 'https://example.com/favicon.ico');
   assert.equal(sanitized.url, original.url);
 });
+
+test('unused imported fields never enter tab storage or synchronization', () => {
+  const original = { id: 't1', groupId: 'g1', url: 'https://example.com', title: 'Demo', unusedPayload: 'x'.repeat(100000) };
+  const sanitized = sanitizeTabRecord(original);
+  assert.equal('unusedPayload' in sanitized, false);
+  assert.equal(sanitized.groupId, 'g1');
+  assert.equal(original.unusedPayload.length, 100000);
+});

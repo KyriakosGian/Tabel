@@ -2,7 +2,7 @@
 
 Tabel is a Chrome extension that saves and organizes open tabs into visual groups.
 
-Version 2.0.0. Manifest V3. English interface.
+Version 2.1.0 source. Manifest V3. English interface. The 2.1 update awaits Chrome Web Store publication.
 
 [Add to Chrome](https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd) | [Official website](https://kyriakosgian.github.io/Tabel/) | [Report a problem](https://github.com/KyriakosGian/Tabel/issues) | [Releases](https://github.com/KyriakosGian/Tabel/releases)
 
@@ -22,8 +22,10 @@ Version 2.0.0. Manifest V3. English interface.
 - Hide tab URLs or show a domain or complete address.
 - Customize density, font size, favicon size, default group width, and group layout.
 - Use System, Light, or Dark theme with a live appearance preview.
-- Sync saved groups through `chrome.storage.sync`.
-- View saved-tab statistics, the time of the last successful sync storage operation, and current sync quota usage.
+- Choose Local Only or Chrome Sync.
+- View separate upload/download timestamps, pending changes, storage use, and deletion history.
+- Clean unused sync data, safely reset the cloud, or clear old Chrome Sync storage while keeping local links.
+- Protect Delete All with typed confirmation and verified local safety backups, and restore the last backup.
 - Import and export JSON backups.
 
 ## Installation
@@ -87,13 +89,22 @@ Tabel/
 
 ## Data storage
 
-- IndexedDB stores groups and tabs.
+- IndexedDB stores groups, tabs, deletion records, and up to five verified local safety backups, with a 50 MiB total backup budget. Export a JSON file for a backup that survives uninstalling the extension.
 - `chrome.storage.local` stores settings, privacy consent, sync status, a context-menu group index, and crash-safe pending capture data.
 - `chrome.storage.sync` synchronizes saved groups between installations with the same extension ID and Google Account when Chrome sync is enabled.
-- The Settings label "Last successful sync" reports the last successful operation with Chrome's sync storage on this device. It does not confirm that another device has received the data.
+- Upload and download timestamps report operations on this device. They do not confirm receipt by another device. An upload failure remains visible after a successful download.
 - Chrome sync provides approximately 100 KB for saved data, deletion records, and sync metadata. Settings shows quota usage. Tabs remain local if a sync write fails.
 - Website icons are rendered through Chrome's favicon API and are not stored or synchronized.
+- Chrome snapshots include SHA-256 verification. Tabel does not add application-level password encryption.
+- Deletion records remain for at least 90 days and until all known devices acknowledge them. New captures of an existing URL preserve its identifier instead of creating another deletion record.
+- Cloud resets create a new collection generation. Old 2.1 devices must explicitly rejoin. Update or stop every 2.0 installation before resetting or clearing Chrome Sync, since 2.0 does not understand reset generations.
+- Clearing Chrome Sync pauses an active Chrome provider and retains a small empty reset marker. It does not delete local links or other extensions' data.
+- Automatic background checks run every five minutes while Chrome is running. Failed network/rate requests retry with backoff.
 - The public manifest key identifies the extension. It is not a password or a credential for accessing another user's data.
+
+## Browser validation
+
+`npm test` runs the dependency-free regression suite. `npm run test:ui` requires Playwright and its Chromium browser and checks confirmations, real IndexedDB backups, and Chrome cloud recovery with synthetic data. `npm run test:extension` loads the real extension in a new unsigned-in Chromium profile and checks database migration, native Chrome storage, alarms, and recovery. `TABEL_PLAYWRIGHT_PATH` can point to an existing Playwright package, and `PLAYWRIGHT_BROWSERS_PATH` can point to an existing browser installation.
 
 ## License
 

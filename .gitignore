@@ -40,3 +40,8 @@ dist/
 
 # Personal Tabel backups
 tabel-backup-*.json
+
+# Local release review and machine-specific testing notes
+docs/plan-2.1.txt
+docs/testing-2.1-el.txt
+docs/validation-2.1.txt

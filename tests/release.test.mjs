@@ -13,6 +13,21 @@ const sitePages = [
   'docs/support/index.html'
 ];
 
+test('release uses only local storage and Chrome Sync without account authorization', () => {
+  const manifest = JSON.parse(read('manifest.json'));
+  assert.deepEqual(manifest.permissions, ['contextMenus', 'tabs', 'storage', 'favicon', 'alarms']);
+  assert.equal(manifest.optional_permissions, undefined);
+  assert.equal(manifest.optional_host_permissions, undefined);
+  assert.equal(manifest.oauth2, undefined);
+  assert.deepEqual([...read('options/options.html').matchAll(/<option value="(local|chrome|drive)"/g)]
+    .map(match => match[1]), ['local', 'chrome']);
+  for (const file of ['README.md', 'CHANGELOG.md', 'release/CHROME_WEB_STORE.md',
+    'release/notes/2.1.0.md', ...sitePages, '_locales/en/messages.json',
+    'dashboard/lib/syncManager.js', 'scripts/build-release.ps1', '.github/workflows/release.yml']) {
+    assert.doesNotMatch(read(file), /Google Drive|appDataFolder|driveSync|GoogleOAuthClientId|RequireDrive/i, file);
+  }
+});
+
 function pngSize(path) {
   const data = readFileSync(join(projectRoot, path));
   assert.equal(data.toString('ascii', 1, 4), 'PNG');
@@ -88,7 +103,8 @@ test('privacy policies disclose storage, synchronization, and Limited Use', () =
   assert.match(html, /chrome\.storage\.local/);
   assert.match(html, /chrome\.storage\.sync/);
   assert.match(html, /Limited Use/i);
-  assert.match(html, /September 17, 2026/);
+  assert.match(html, /October 12, 2026/);
+  assert.match(html, /verified safety backups/);
   assert.match(html, /favicon API/i);
   assert.match(html, /not stored or synchronized/i);
 });

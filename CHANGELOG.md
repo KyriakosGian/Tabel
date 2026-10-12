@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.1.0, 2026-10-12
+
+- Added Local Only mode alongside Chrome Sync.
+- Added resumable Chrome Sync compaction and reset checkpoints for recovery from full storage or interrupted writes.
+- Added separate upload/download timestamps, pending/error state, deletion history diagnostics, and manual sync retry.
+- Added unused-data cleanup and explicit Chrome cloud clearing that preserves local links and pauses Chrome synchronization.
+- Protected Delete All with typed confirmation and verified local safety backups. Added restore and backup cleanup controls.
+- Kept up to five safety backups with a 50 MiB total budget and pinned checkpoints needed by unfinished recovery jobs.
+- Reused saved tab identifiers on recapture to avoid unnecessary deletion history.
+- Removed unused imported record fields from storage and sync while preserving supported group and tab properties.
+- Added periodic background sync and expanded regression coverage for quota recovery, reset fencing, and backup failures.
+- Avoided unchanged automatic uploads and serialized device identity creation across extension pages and the background worker.
+
 ## 2.0.0, 2026-09-17
 
 - Now available publicly on the [Chrome Web Store](https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd). Installation links and documentation now point to the Store. The extension package is unchanged.

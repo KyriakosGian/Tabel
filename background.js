@@ -3,8 +3,7 @@
  * Handles the "Sweep" action, tab capture, and message routing.
  */
 
-// Note: ES module imports don't work directly in service workers for IndexedDB
-// We'll use message passing to communicate with the dashboard
+// Tab capture handlers. Periodic sync is initialized by background-worker.js.
 
 const DASHBOARD_URL = chrome.runtime.getURL('dashboard/dashboard.html');
 const PENDING_SWEEP_PREFIX = 'tabel_pending_sweep_';

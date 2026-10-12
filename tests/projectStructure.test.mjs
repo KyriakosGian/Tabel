@@ -14,6 +14,11 @@ test('module imports reference existing local files', () => {
     'dashboard/components/TabItem.js',
     'dashboard/lib/db.js',
     'dashboard/lib/sync.js',
+    'dashboard/lib/syncManager.js',
+    'dashboard/lib/chromeSync.js',
+    'dashboard/lib/backups.js',
+    'background-worker.js',
+    'options/confirmation.js',
     'options/options.js'
   ];
 
@@ -142,7 +147,7 @@ test('Dashboard saves selected tabs, then closes the browser tabs after persiste
     dashboardSource.indexOf('await closeCapturedTabs(chrome.tabs, capturedBrowserTabs)')
   );
   assert.match(dbSource, /async addTabsToGroup\(groupId, tabs = \[\]\)/);
-  assert.match(dbSource, /_replaceCapturedUrls\(data, uniqueTabs, groupId, now\)/);
+  assert.match(dbSource, /_replaceCapturedUrls\(data, uniqueTabs, groupId, now, previousItems\)/);
   assert.doesNotMatch(dbSource, /async _prependItems/);
   assert.match(optionsHtml, /id="setting-include-pinned-tabs"/);
   assert.match(optionsHtml, /id="setting-include-audible-tabs"/);
@@ -151,7 +156,7 @@ test('Dashboard saves selected tabs, then closes the browser tabs after persiste
 test('Settings shows last successful sync and quota usage', () => {
   const optionsHtml = read('options/options.html');
   const optionsSource = read('options/options.js');
-  const syncSource = read('dashboard/lib/sync.js');
+  const syncSource = read('dashboard/lib/syncManager.js');
 
   assert.match(optionsHtml, /id="settings-last-sync"/);
   assert.match(optionsHtml, /id="settings-sync-quota"/);

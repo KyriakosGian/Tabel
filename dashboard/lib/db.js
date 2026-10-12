@@ -5,16 +5,17 @@
  */
 
 import { createTombstone, mergeSyncData } from './merge.js';
-import { sanitizeTabRecord } from './recordSanitizer.js';
+import { sanitizeGroupRecord, sanitizeTabRecord, sanitizeTombstoneRecord } from './recordSanitizer.js';
 import { validateData } from './validateData.js';
 
 const DB_NAME = 'TabelDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 const STORES = {
   GROUPS: 'tabGroups',
   ITEMS: 'tabItems',
-  TOMBSTONES: 'tombstones'
+  TOMBSTONES: 'tombstones',
+  BACKUPS: 'backups'
 };
 
 class TabelDB {
@@ -51,6 +52,10 @@ class TabelDB {
           tombstoneStore.createIndex('deletedAt', 'deletedAt', { unique: false });
         }
 
+        if (!db.objectStoreNames.contains(STORES.BACKUPS)) {
+          db.createObjectStore(STORES.BACKUPS, { keyPath: 'id' });
+        }
+
         // Remove the deprecated thumbnails store from older (v1) installs.
         if (db.objectStoreNames.contains('thumbnails')) {
           db.deleteObjectStore('thumbnails');
@@ -58,22 +63,32 @@ class TabelDB {
 
         // Version 4 stops storing remote favicon URLs. Existing records are
         // migrated in place so legacy favicon data also leaves IndexedDB.
-        if (event.oldVersion < 4 && db.objectStoreNames.contains(STORES.ITEMS)) {
-          const itemStore = event.target.transaction.objectStore(STORES.ITEMS);
-          const cursorRequest = itemStore.openCursor();
-          cursorRequest.onsuccess = () => {
-            const cursor = cursorRequest.result;
-            if (!cursor) return;
-            cursor.update(sanitizeTabRecord(cursor.value));
-            cursor.continue();
-          };
+        if (event.oldVersion < 5) {
+          for (const [name, sanitize] of [[STORES.GROUPS, sanitizeGroupRecord], [STORES.ITEMS, sanitizeTabRecord], [STORES.TOMBSTONES, sanitizeTombstoneRecord]]) {
+            const cursorRequest = event.target.transaction.objectStore(name).openCursor();
+            cursorRequest.onsuccess = () => {
+              const cursor = cursorRequest.result;
+              if (!cursor) return;
+              cursor.update(sanitize(cursor.value));
+              cursor.continue();
+            };
+          }
         }
       };
 
       request.onsuccess = (event) => {
-        this._db = event.target.result;
+        const database = event.target.result;
+        this._db = database;
+        database.onversionchange = () => {
+          database.close();
+          if (this._db === database) {
+            this._db = null;
+            this._ready = null;
+          }
+        };
         resolve(this._db);
       };
+      request.onblocked = () => reject(new Error('Close other Tabel pages to finish the database upgrade.'));
 
       request.onerror = (event) => {
         console.error('[TabelDB] Failed to open database:', event.target.error);
@@ -84,7 +99,10 @@ class TabelDB {
 
   /** Ensure the DB is ready before any operation */
   async _getDB() {
-    if (!this._db) await this._ready;
+    if (!this._db) {
+      this._ready ||= this._init();
+      try { await this._ready; } catch (error) { this._ready = null; throw error; }
+    }
     return this._db;
   }
 
@@ -164,7 +182,8 @@ class TabelDB {
               const store = tx.objectStore(storeName);
               store.clear();
               for (const record of edited.data[key]) {
-                store.put(key === 'items' ? sanitizeTabRecord(record) : record);
+                const sanitize = key === 'items' ? sanitizeTabRecord : key === 'groups' ? sanitizeGroupRecord : sanitizeTombstoneRecord;
+                store.put(sanitize(record));
               }
             }
           } catch (error) {
@@ -212,22 +231,36 @@ class TabelDB {
       }
       group.order = 0;
 
-      this._replaceCapturedUrls(data, uniqueTabs, groupId, now);
+      const previousItems = this._capturedItems(data, uniqueTabs);
+      this._replaceCapturedUrls(data, uniqueTabs, groupId, now, previousItems);
       data.groups.push(group);
-      data.items.push(...this._captureRecords(groupId, uniqueTabs, now));
+      data.items.push(...this._captureRecords(groupId, uniqueTabs, now, previousItems));
       return { data, result: group };
     });
   }
 
-  _captureRecords(groupId, tabs, now) {
+  _capturedItems(data, tabs) {
+    const urls = new Set(tabs.map(tab => tab.url));
+    const previous = new Map();
+    for (const item of data.items) {
+      if (!urls.has(item.url)) continue;
+      const selected = previous.get(item.url);
+      if (!selected || (item.updatedAt || 0) > (selected.updatedAt || 0) ||
+          ((item.updatedAt || 0) === (selected.updatedAt || 0) && item.id > selected.id)) previous.set(item.url, item);
+    }
+    return previous;
+  }
+
+  _captureRecords(groupId, tabs, now, previous = new Map()) {
     return tabs.map((tab, index) => ({
-      id: `tab_${now}_${index}_${Math.random().toString(36).slice(2, 8)}`,
+      id: previous.get(tab.url)?.id || `tab_${now}_${index}_${Math.random().toString(36).slice(2, 8)}`,
       groupId, url: tab.url, title: tab.title || tab.url,
-      order: index, createdAt: now, updatedAt: now
+      order: index, createdAt: previous.get(tab.url)?.createdAt || now,
+      updatedAt: Math.max(now, (previous.get(tab.url)?.updatedAt || 0) + 1)
     }));
   }
 
-  _replaceCapturedUrls(data, tabs, preserveGroupId, now) {
+  _replaceCapturedUrls(data, tabs, preserveGroupId, now, previous = new Map()) {
     const urls = new Set(tabs.map(tab => tab.url));
     const affected = new Set();
     const tombstones = new Map(data.tombstones.map(record => [record.key, record]));
@@ -235,8 +268,12 @@ class TabelDB {
     data.items = data.items.filter(item => {
       if (!urls.has(item.url)) return true;
       affected.add(item.groupId);
-      const deletion = createTombstone('item', item.id, now);
-      tombstones.set(deletion.key, deletion);
+      if (previous.get(item.url)?.id === item.id) {
+        tombstones.delete(`item:${item.id}`);
+      } else {
+        const deletion = createTombstone('item', item.id, now);
+        tombstones.set(deletion.key, deletion);
+      }
       replacedCount++;
       return false;
     });
@@ -358,14 +395,15 @@ class TabelDB {
       }
 
       const now = Date.now();
-      const replacedCount = this._replaceCapturedUrls(data, uniqueTabs, groupId, now);
+      const previousItems = this._capturedItems(data, uniqueTabs);
+      const replacedCount = this._replaceCapturedUrls(data, uniqueTabs, groupId, now, previousItems);
       const currentTabs = data.items.filter(item => item.groupId === groupId)
         .sort((a, b) => a.order - b.order);
       currentTabs.forEach((tab, index) => {
         tab.order = uniqueTabs.length + index;
         tab.updatedAt = now;
       });
-      data.items.push(...this._captureRecords(groupId, uniqueTabs, now));
+      data.items.push(...this._captureRecords(groupId, uniqueTabs, now, previousItems));
       group.tabCount = currentTabs.length + uniqueTabs.length;
       group.updatedAt = now;
       return {
@@ -515,16 +553,17 @@ class TabelDB {
     return this._editSnapshot(({ groups, items, tombstones }) => ({ result: {
       version: DB_VERSION,
       exportedAt: Date.now(),
-      groups,
+      groups: groups.map(sanitizeGroupRecord),
       items: items.map(sanitizeTabRecord),
-      tombstones
+      tombstones: tombstones.map(sanitizeTombstoneRecord)
     } }), 'readonly');
   }
 
   /** Import data (full overwrite — used for manual import/restore) */
-  async importAll(data) {
+  async importAll(data, options = {}) {
     validateData(data);
     return this._editSnapshot(current => {
+      this._checkExpectedSnapshot(current, options.expectedCurrent);
       const currentGroups = current.groups;
       const currentItems = current.items;
       const currentTombstones = current.tombstones;
@@ -575,6 +614,81 @@ class TabelDB {
     });
   }
 
+  _checkExpectedSnapshot(current, expected) {
+    if (!expected) return;
+    const contents = data => JSON.stringify({
+      groups: data.groups.map(sanitizeGroupRecord),
+      items: data.items.map(sanitizeTabRecord),
+      tombstones: (data.tombstones || []).map(sanitizeTombstoneRecord)
+    });
+    if (contents(current) !== contents(expected)) {
+      throw new Error('Saved data changed. Please review the action again.');
+    }
+  }
+
+  /** Exact replacement is reserved for confirmed cloud-generation recovery. */
+  async replaceAll(data, options = {}) {
+    validateData(data);
+    return this._editSnapshot(current => {
+      this._checkExpectedSnapshot(current, options.expectedCurrent);
+      return { data: {
+        groups: data.groups,
+        items: data.items.map(sanitizeTabRecord),
+        tombstones: data.tombstones || []
+      } };
+    });
+  }
+
+  async saveBackup(backup, { pinnedIds = [] } = {}) {
+    const database = await this._getDB();
+    return new Promise((resolve, reject) => {
+      const tx = database.transaction(STORES.BACKUPS, 'readwrite');
+      const store = tx.objectStore(STORES.BACKUPS);
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const storedBackup = {
+          ...backup,
+          createdAt: Math.max(backup.createdAt, ...request.result.map(record => record.createdAt + 1))
+        };
+        const pinned = new Set([...pinnedIds, backup.id]);
+        const records = [...request.result, storedBackup]
+          .sort((a, b) => Number(pinned.has(b.id)) - Number(pinned.has(a.id)) ||
+            b.createdAt - a.createdAt || b.id.localeCompare(a.id));
+        let total = 0;
+        const keep = new Set();
+        for (const record of records) {
+          // Keep the new verified checkpoint, at most five records and 50 MiB.
+          if (keep.size < 5 && total + record.bytes <= 50 * 1024 * 1024) {
+            keep.add(record.id);
+            total += record.bytes;
+          }
+        }
+        if (records.some(record => pinned.has(record.id) && !keep.has(record.id))) { tx.abort(); return; }
+        store.put(storedBackup);
+        for (const record of request.result) {
+          if (!keep.has(record.id)) store.delete(record.id);
+        }
+      };
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error || new Error('Backup storage failed'));
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async getBackup(id) { return this._get(STORES.BACKUPS, id); }
+  async getBackups() { return this._getAll(STORES.BACKUPS); }
+
+  async clearBackups() {
+    const database = await this._getDB();
+    return new Promise((resolve, reject) => {
+      const tx = database.transaction(STORES.BACKUPS, 'readwrite');
+      tx.objectStore(STORES.BACKUPS).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('Backup cleanup failed'));
+    });
+  }
+
   /** Merge local and remote records. Tombstones propagate deletions safely. */
   async mergeAll(remoteData) {
     validateData(remoteData);
@@ -598,26 +712,20 @@ class TabelDB {
   }
 
   /** Delete all data */
-  async clearAll() {
-    const groups = await this._getAll(STORES.GROUPS);
-    const items = await this._getAll(STORES.ITEMS);
-    const db = await this._getDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction([STORES.GROUPS, STORES.ITEMS, STORES.TOMBSTONES], 'readwrite');
-      const tombstoneStore = tx.objectStore(STORES.TOMBSTONES);
+  async clearAll(options = {}) {
+    return this._editSnapshot(current => {
+      this._checkExpectedSnapshot(current, options.expectedCurrent);
+      const tombstones = new Map(current.tombstones.map(record => [record.key, record]));
       const deletedAt = Date.now();
-
-      tx.objectStore(STORES.GROUPS).clear();
-      tx.objectStore(STORES.ITEMS).clear();
-      for (const group of groups) {
-        tombstoneStore.put(createTombstone('group', group.id, deletedAt));
+      for (const group of current.groups) {
+        const record = createTombstone('group', group.id, deletedAt);
+        tombstones.set(record.key, record);
       }
-      for (const item of items) {
-        tombstoneStore.put(createTombstone('item', item.id, deletedAt));
+      for (const item of current.items) {
+        const record = createTombstone('item', item.id, deletedAt);
+        tombstones.set(record.key, record);
       }
-
-      tx.oncomplete = () => resolve();
-      tx.onerror = (e) => reject(e.target.error);
+      return { data: { groups: [], items: [], tombstones: [...tombstones.values()] } };
     });
   }
 }

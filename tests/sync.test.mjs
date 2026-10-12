@@ -5,6 +5,7 @@ globalThis.indexedDB = { open: () => ({}) };
 
 const { db } = await import('../dashboard/lib/db.js');
 const { SyncManager } = await import('../dashboard/lib/sync.js');
+db.mergeAll = async () => ({ localOnlyCount: 0, remoteOnlyCount: 0, updatedCount: 0 });
 
 test('chunks round-trip Unicode and escaped text within the storage byte quota', () => {
   const manager = new SyncManager();
@@ -113,7 +114,7 @@ test('pushNow reports storage failures', async () => {
   }
 
   assert.equal(success, false);
-  assert.equal(errorKey, 'syncQuotaError');
+  assert.equal(errorKey, 'syncCapacityError');
   assert.equal(deleteCalled, false);
 });
 
@@ -191,7 +192,8 @@ test('a legacy device blocks cleanup until it publishes an acknowledgement', asy
             updatedAt: 10,
             chunkCount: 1,
             version: 3
-          }
+          },
+          tabel_sync_chunk_0: JSON.stringify({ groups: [], items: [], tombstones: [] })
         }),
         set: async value => { written = value; },
         remove: async () => undefined
@@ -243,6 +245,10 @@ test('pull acknowledges remote tombstones for the current device', async () => {
   });
   globalThis.chrome = {
     storage: {
+      local: {
+        get: async () => ({}),
+        set: async () => undefined
+      },
       sync: {
         get: async () => ({
           tabel_sync_meta: {

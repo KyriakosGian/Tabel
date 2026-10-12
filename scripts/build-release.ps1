@@ -23,6 +23,7 @@ try {
   foreach ($file in @('manifest.json', 'background.js')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $file) -Destination $stageRoot
   }
+  Copy-Item -LiteralPath (Join-Path $projectRoot 'background-worker.js') -Destination $stageRoot
   foreach ($directory in @('dashboard', 'options', 'styles', 'icons', '_locales')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $directory) -Destination $stageRoot -Recurse
   }
@@ -39,10 +40,16 @@ try {
     foreach ($required in @(
       'manifest.json',
       'background.js',
+      'background-worker.js',
       'dashboard/dashboard.html',
       'dashboard/lib/appearance.js',
       'dashboard/lib/tabCapture.js',
+      'dashboard/lib/chromeSync.js',
+      'dashboard/lib/syncManager.js',
+      'dashboard/lib/syncCommon.js',
+      'dashboard/lib/backups.js',
       'options/options.html',
+      'options/confirmation.js',
       'styles/tabel.css',
       '_locales/en/messages.json',
       'icons/icon128.png'

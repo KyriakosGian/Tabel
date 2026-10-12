@@ -1,4 +1,4 @@
-# Tabel 2.0.0, Chrome Web Store release material
+# Tabel 2.1.0, Chrome Web Store release material
 
 ## URLs
 
@@ -11,7 +11,7 @@
 
 - Primary language: English
 - Category: Productivity, workflow and organization
-- Status: Publicly available, version 2.0.0
+- Status: The 2.1.0 update is approved for submission and awaits Chrome Web Store publication.
 - Name: `Tabel: Tab Manager`
 - Summary: `Organize open tabs into synced visual groups, save memory, and restore them whenever you need.`
 
@@ -32,16 +32,18 @@ Key features:
 - Drag and sort groups and tabs.
 - Lock, collapse, and format groups.
 - Restore one tab or a complete group.
-- Sync between Chrome installations through `chrome.storage.sync`.
+- Choose Local Only or Chrome Sync.
+- Recover from full Chrome Sync storage and clear old Chrome cloud data without deleting local links.
+- Require typed confirmation for Delete All and keep verified local safety backups.
 - Import and export JSON backups.
 - Use System, Light, or Dark theme and three density levels.
 - Adjust font size, favicon size, default group width, and URL display.
 - View local tab and group statistics.
-- View the time of the last successful sync storage operation and sync quota usage.
+- View separate upload/download times, pending errors, deletion history, and storage use.
 
 Tabel uses no Tabel account, advertisements, remote code, or developer-operated server.
 
-Chrome synchronization requires the same Google Account with Chrome sync enabled on each device. Approximately 100 KB is available for saved data, deletion records, and sync metadata. If this limit is reached, your saved tabs remain available locally. The sync timestamp records a successful storage operation on this device, not confirmation that another device has received the data. Export JSON backups from Settings to keep an additional copy of saved groups and tabs. Extension settings are not included in backups.
+Chrome Sync requires the same Chrome account and enabled extension data synchronization, and provides approximately 100 KB. Upload failures keep data local, and timestamps do not confirm receipt on other devices. Update or stop older versions before a Chrome cloud reset. Export JSON for backups that survive uninstalling Tabel. Verified local safety backups retain up to five copies with a 50 MiB total budget.
 
 ## Single purpose
 
@@ -65,6 +67,10 @@ Required to display website icons through Chrome's favicon API without storing e
 
 Required to provide the user-invoked Save this tab and Save this link commands. Tabel processes a page or link only after the user selects one of these commands.
 
+### alarms
+
+Required to resume pending synchronization and check for remote changes every five minutes while Chrome is running. The alarm is removed in Local Only mode.
+
 ## Remote code
 
 Select: No, I am not using remote code.
@@ -78,7 +84,7 @@ Declare:
 - Web history, specifically open-tab URLs and page titles accessed to populate Save Tabs, and URLs and titles retained after the user saves tabs through the extension action, Dashboard, or context menu.
 - Website content, specifically hyperlinks saved through Save this link.
 
-The privacy policy also discloses user-created group names, sorting choices, and display preferences. Tabel does not continuously record browsing history or read full webpage content.
+The privacy policy also discloses group names, display preferences, deletion history, and local safety backups. Tabel does not continuously record browsing history or read full webpage content.
 
 Data use:
 
@@ -88,13 +94,13 @@ Data use:
 - No sale of data.
 - No transfer to a developer-operated server.
 - No human access to user data.
-- Synchronization only through Google Chrome's `chrome.storage.sync` service.
+- Synchronization through Google Chrome Sync when enabled by the user.
 
 Certify every applicable Limited Use statement in the Privacy practices tab.
 
-## Version 2.0.0 release notes
+## Version 2.1.0 release notes
 
-Tabel 2.0.0 adopts the official Chrome Web Store identity, improves capture and synchronization reliability, and validates backups before replacing saved data.
+Tabel 2.1.0 adds recovery from full Chrome Sync, separate sync status, safe cloud clearing/reset, and typed Delete All with verified local backups. Repeated capture preserves tab IDs to reduce unnecessary deletion history.
 
 ## Distribution
 
@@ -107,6 +113,7 @@ Tabel 2.0.0 adopts the official Chrome Web Store identity, improves capture and 
 - Store icon: `icons/icon128.png`
 - Screenshot: `docs/assets/dashboard-preview.png`
 - Settings screenshot: `docs/assets/settings-preview.png`
+- Delete All confirmation screenshot: `release/assets/delete-all-confirmation-1280x800.png`
 - Small promo tile: `release/assets/promo-tile-440x280.png`
 
 ## Package
@@ -117,13 +124,13 @@ Run:
 npm run build:release
 ```
 
-The 2.0.0 package is `dist/tabel-2.0.0-chrome-web-store.zip`. It excludes tests, documentation, and release files. The official Store public key is preserved so unpacked installations use the Store extension ID. Documentation-only updates do not require a new package or Store submission.
+The 2.1.0 package is `dist/tabel-2.1.0-chrome-web-store.zip`. It excludes tests, documentation, and release files. The official public key and extension ID are preserved.
 
 The GitHub release workflow runs when a new version tag is pushed, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release. The tag must be `v` followed by the version in `manifest.json` and `package.json`. Do not reuse an existing release tag.
 
 The published Store item ID is `hmdklfckhfiobokdglandjdndgaefngd`. Its public key is configured in `manifest.json` and checked by the test suite. Preserve this identity for future updates.
 
-Before submission, verify that the screenshots match the final extension and contain only demonstration data. Verify the public privacy and support URLs and disclose that Chrome sync storage is limited to approximately 100 KB across saved data, deletion records, and sync metadata.
+Before submission, verify Chrome Sync on two test installations with a dedicated test account. Use the updated 2.1 Store screenshots with demonstration data. Verify the public privacy/support pages and disclose the Chrome Sync limit, safety backup retention, and older-version reset requirements.
 
 ## Future extension updates
 

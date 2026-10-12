@@ -31,8 +31,25 @@ test('capture replaces duplicates and prepends tabs in one commit', async () => 
   assert.equal(saved().groups[0].tabCount, 2);
   assert.equal(saved().items.find(item => item.id === 'keep').order, 1);
   assert.equal(saved().items.find(item => item.url === 'https://same.example').title, 'Newest');
-  assert.ok(saved().tombstones.some(record => record.key === 'item:old'));
+  assert.equal(saved().items.find(item => item.url === 'https://same.example').id, 'old');
+  assert.equal(saved().tombstones.some(record => record.key === 'item:old'), false);
   assert.ok(saved().tombstones.some(record => record.key === 'group:g2'));
+});
+
+test('repeated capture of the same URL keeps its id without growing deletion history', async () => {
+  const saved = memorySnapshot({
+    groups: [{ id: 'g1', locked: false }],
+    items: [{ id: 'existing', groupId: 'g1', url: 'https://same.example', title: 'Original', order: 0, createdAt: 10, updatedAt: 20 }],
+    tombstones: []
+  });
+  for (let count = 0; count < 40; count++) {
+    await db.addTabsToGroup('g1', [{ url: 'https://same.example', title: `Capture ${count}` }]);
+  }
+  assert.equal(saved().items.length, 1);
+  assert.equal(saved().items[0].id, 'existing');
+  assert.equal(saved().items[0].createdAt, 10);
+  assert.equal(saved().items[0].title, 'Capture 39');
+  assert.equal(saved().tombstones.length, 0);
 });
 
 test('locked destinations leave the snapshot unchanged', async () => {

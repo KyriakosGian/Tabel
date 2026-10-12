@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "default_locale": "en",
   "homepage_url": "https://kyriakosgian.github.io/Tabel/",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlOnhyPp0nou3S6ZMFwAD0grj38Y/DzBi40bv9coq4KCnkqwTJdjGnug9XxB0WyQUvqnYDLDomis8UHCluxKR3xmy8zOgwXAqIVUWVuBST/cPAKpXBnthNDOrbcJAo/dXh4ZVXSvBpEP97qIgA8p0W4cXm+5CoBNjWl3AjRqZ0KdGVeG+fizIbAXELBudx+ABEqRDdfCrp2jv3Aa5QnTAKY4dES6HSIr6iDJMKBvkBPRQ81FNEQnP6uxmWD+hIvsWyj0D7A7Uz6ZTgWCxPveGXW6qrNxRu33pHUDxT+sI6VWczii6mxJjq/FYBA3WhcExkiShL7c67Ia2U9ctq+r08QIDAQAB",
@@ -20,13 +20,15 @@
     "default_title": "__MSG_actionTitle__"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background-worker.js",
+    "type": "module"
   },
   "permissions": [
     "contextMenus",
     "tabs",
     "storage",
-    "favicon"
+    "favicon",
+    "alarms"
   ],
   "options_ui": {
     "page": "options/options.html",

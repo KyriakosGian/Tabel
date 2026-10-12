@@ -202,18 +202,49 @@
 
     <div class="settings-section">
       <h2 data-i18n="settingsSync">Sync</h2>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="setting-sync-provider" data-i18n="settingsSyncProvider">Storage and sync</label>
+          <p data-i18n="settingsSyncProviderDesc">Choose where your saved data synchronizes. Local data stays available offline.</p>
+        </div>
+        <select class="setting-select" id="setting-sync-provider">
+          <option value="local" data-i18n="settingsLocalOnly">Local Only</option>
+          <option value="chrome" data-i18n="settingsChromeSync">Chrome Sync</option>
+        </select>
+      </div>
+      <p class="sync-status" id="settings-sync-state" role="status" aria-live="polite"></p>
       <div class="settings-stats" role="status" aria-live="polite">
         <div class="settings-stat">
           <div class="settings-stat__value settings-stat__value--small" id="settings-last-sync">Not yet</div>
-          <div class="settings-stat__label" data-i18n="settingsLastSuccessfulSync">Last successful sync</div>
+          <div class="settings-stat__label" data-i18n="settingsLastUpload">Last successful upload</div>
+        </div>
+        <div class="settings-stat">
+          <div class="settings-stat__value settings-stat__value--small" id="settings-last-pull">Not yet</div>
+          <div class="settings-stat__label" data-i18n="settingsLastDownload">Last successful download</div>
         </div>
         <div class="settings-stat">
           <div class="settings-stat__value settings-stat__value--small" id="settings-sync-quota">0 KB / 100 KB</div>
-          <div class="settings-stat__label" data-i18n="settingsSyncQuota">Sync quota usage</div>
+          <div class="settings-stat__label" data-i18n="settingsChromeQuota">Chrome Sync storage usage</div>
         </div>
       </div>
       <div class="quota-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="settings-sync-quota-meter">
         <div class="quota-meter__fill" id="settings-sync-quota-fill"></div>
+      </div>
+      <dl class="sync-details">
+        <div><dt data-i18n="settingsActiveData">Local active data</dt><dd id="sync-active-bytes">0 KB</dd></div>
+        <div><dt data-i18n="settingsDeletionHistory">Local deletion history</dt><dd id="sync-deletion-bytes">0 KB</dd></div>
+        <div><dt data-i18n="settingsDeletionRecords">Deletion records</dt><dd id="sync-deletion-count">0</dd></div>
+        <div><dt data-i18n="settingsUnusedChunks">Unused Chrome Sync data</dt><dd id="sync-unused-bytes">0 KB</dd></div>
+        <div><dt data-i18n="settingsSyncMetadata">Chrome Sync metadata</dt><dd id="sync-metadata-bytes">0 KB</dd></div>
+        <div><dt data-i18n="settingsBlockingDevices">Chrome devices awaiting deletions</dt><dd id="sync-blocking-devices">0</dd></div>
+      </dl>
+      <p class="sync-hint" data-i18n="settingsDeletionExplanation">Deletion records prevent other devices from bringing back removed links. They remain for at least 90 days and until all known devices acknowledge them.</p>
+      <div class="settings-section-actions sync-actions">
+        <button class="btn" id="btn-sync-now" type="button" data-i18n="settingsSyncNow">Sync Now / Retry</button>
+        <button class="btn" id="btn-clean-sync" type="button" data-i18n="settingsCleanSync">Clean Unused Sync Data</button>
+        <button class="btn btn--danger" id="btn-reset-cloud" type="button" data-i18n="settingsResetCloud">Reset Cloud From This Device</button>
+        <button class="btn btn--danger" id="btn-clear-chrome" type="button" data-i18n="settingsClearChromeCloud">Clear Chrome Sync Storage</button>
+        <button class="btn" id="btn-adopt-cloud" type="button" hidden data-i18n="settingsAdoptCloud">Use Current Cloud Data</button>
       </div>
     </div>
 
@@ -236,6 +267,17 @@
           <p data-i18n="deleteAllDesc">Delete all saved tab data.</p>
         </div>
         <button class="btn btn--danger" id="btn-delete-all" data-i18n="deleteAll">Delete All</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <label data-i18n="settingsSafetyBackups">Safety backups</label>
+          <p data-i18n="settingsSafetyBackupsDesc">Up to five verified local backups are kept before critical actions. They stay on this device.</p>
+          <p id="settings-backup-summary"></p>
+        </div>
+        <div class="btn-group">
+          <button class="btn" id="btn-restore-backup" type="button" data-i18n="settingsRestoreBackup">Restore Last Backup</button>
+          <button class="btn" id="btn-clear-backups" type="button" data-i18n="settingsClearBackups">Clear Backups</button>
+        </div>
       </div>
     </div>
 

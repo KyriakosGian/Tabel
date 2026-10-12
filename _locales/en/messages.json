@@ -225,11 +225,11 @@
     "description": "Tab data description"
   },
   "privacyNoticeStorage": {
-    "message": "Data stays in Chrome and can sync through your account using chrome.storage.sync.",
+    "message": "Data stays in Chrome. Chrome Sync can synchronize through your Chrome profile. Verified safety backups stay on this device.",
     "description": "Storage and synchronization description"
   },
   "privacyNoticeSharing": {
-    "message": "The developer does not receive, sell, or use your data for advertising.",
+    "message": "Tabel has no developer-operated server and does not sell or share your saved links. Google processes synchronized data through the storage service you choose.",
     "description": "Data non-disclosure description"
   },
   "privacyAccept": {
@@ -276,15 +276,42 @@
     "message": "Drag to reorder",
     "description": "Reorder tooltip"
   },
-  "colorDefault": { "message": "Default", "description": "Default color" },
-  "colorRed": { "message": "Red", "description": "Red color" },
-  "colorOrange": { "message": "Orange", "description": "Orange color" },
-  "colorYellow": { "message": "Yellow", "description": "Yellow color" },
-  "colorGreen": { "message": "Green", "description": "Green color" },
-  "colorCyan": { "message": "Cyan", "description": "Cyan color" },
-  "colorIndigo": { "message": "Indigo", "description": "Indigo color" },
-  "colorPurple": { "message": "Purple", "description": "Purple color" },
-  "colorPink": { "message": "Pink", "description": "Pink color" },
+  "colorDefault": {
+    "message": "Default",
+    "description": "Default color"
+  },
+  "colorRed": {
+    "message": "Red",
+    "description": "Red color"
+  },
+  "colorOrange": {
+    "message": "Orange",
+    "description": "Orange color"
+  },
+  "colorYellow": {
+    "message": "Yellow",
+    "description": "Yellow color"
+  },
+  "colorGreen": {
+    "message": "Green",
+    "description": "Green color"
+  },
+  "colorCyan": {
+    "message": "Cyan",
+    "description": "Cyan color"
+  },
+  "colorIndigo": {
+    "message": "Indigo",
+    "description": "Indigo color"
+  },
+  "colorPurple": {
+    "message": "Purple",
+    "description": "Purple color"
+  },
+  "colorPink": {
+    "message": "Pink",
+    "description": "Pink color"
+  },
   "saveTabs": {
     "message": "Save Tabs",
     "description": "Dashboard button and dialog title"
@@ -538,5 +565,245 @@
   "syncQuotaError": {
     "message": "Sync could not complete. Your data remains saved on this device. Check sync storage usage in Settings and your Chrome sync settings.",
     "description": "Shown when chrome.storage.sync quota is exceeded"
+  },
+  "settingsSyncProvider": {
+    "message": "Storage and sync",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsSyncProviderDesc": {
+    "message": "Choose where your saved data synchronizes. Local data stays available offline.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsLocalOnly": {
+    "message": "Local Only",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsChromeSync": {
+    "message": "Chrome Sync",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsLastUpload": {
+    "message": "Last successful upload",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsLastDownload": {
+    "message": "Last successful download",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsChromeQuota": {
+    "message": "Chrome Sync storage usage",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsActiveData": {
+    "message": "Local active data",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsDeletionHistory": {
+    "message": "Local deletion history",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsDeletionRecords": {
+    "message": "Deletion records",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsUnusedChunks": {
+    "message": "Unused Chrome Sync data",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsSyncMetadata": {
+    "message": "Chrome Sync metadata",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsBlockingDevices": {
+    "message": "Chrome devices awaiting deletions",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsDeletionExplanation": {
+    "message": "Deletion records prevent other devices from bringing back removed links. They remain for at least 90 days and until all known devices acknowledge them. Local data sizes exclude sync encoding overhead.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsSyncNow": {
+    "message": "Sync Now / Retry",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsCleanSync": {
+    "message": "Clean Unused Sync Data",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsResetCloud": {
+    "message": "Reset Cloud From This Device",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsAdoptCloud": {
+    "message": "Use Current Cloud Data",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsSafetyBackups": {
+    "message": "Safety backups",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsSafetyBackupsDesc": {
+    "message": "Up to five verified local backups are kept before critical actions. They stay on this device. Uninstalling Tabel also removes these backups, so export a file for long-term storage.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsRestoreBackup": {
+    "message": "Restore Last Backup",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsClearBackups": {
+    "message": "Clear Backups",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "confirmationType": {
+    "message": "Type $1 to enable this action.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "clearBackupsReview": {
+    "message": "Permanently remove all safety backups on this device. Saved groups and tabs will remain.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "deleteAllReview": {
+    "message": "Groups: $1. Saved links: $2.\nDelete this saved data on this device. Deletions will also reach your connected devices when sync completes. A verified local safety backup will be created first.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "localSavedSyncPending": {
+    "message": "Saved on this device. Cloud sync is still pending. Check the Sync section and retry.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "localDeletedSyncPending": {
+    "message": "Deleted on this device. Cloud deletion is still pending. A local safety backup is available.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncComplete": {
+    "message": "Sync completed on this device.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncCleanupComplete": {
+    "message": "Unused sync data was cleaned. Deletion records still needed by other devices remain.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "chromeConnectReview": {
+    "message": "Merge this device's saved data with Chrome Sync for this Chrome profile. Chrome Sync has a 100 KB limit. Other devices must use the same storage option.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncConnect": {
+    "message": "Connect",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "resetCloudReview": {
+    "message": "Rebuild the cloud using only this device's $1 groups and $2 saved links. Previous cloud data and deletion history will be superseded. A verified local safety backup will be created first. Other Tabel 2.1 devices must rejoin the new cloud collection before sending their old data.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "resetLegacyAcknowledgement": {
+    "message": "Every installation using Chrome Sync is updated to Tabel 2.1 or has stopped syncing. Older versions can still overwrite Chrome Sync.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "cloudResetComplete": {
+    "message": "Cloud rebuilt from this device. Other devices may need to rejoin.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "adoptCloudReview": {
+    "message": "Replace this device's saved data with the current cloud collection. A verified local backup of this device's data will be kept. Old local records will not merge automatically.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "restoreBackupReview": {
+    "message": "Restore the safety backup from $1 containing $2 groups and $3 links. Current data will be backed up first. The restored changes will synchronize to your connected devices.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "backupSummary": {
+    "message": "$1 safety backups on this device.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "backupRestored": {
+    "message": "Safety backup restored.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "backupUnavailable": {
+    "message": "No safety backup is available.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "backupFailed": {
+    "message": "The safety backup could not be saved or verified. The action was cancelled.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "backupIntegrityError": {
+    "message": "The safety backup failed verification. Your saved data was not replaced.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncLocalStatus": {
+    "message": "Local Only. Changes stay on this device.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncPendingStatus": {
+    "message": "Changes are saved locally and are waiting to upload.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncReadyStatus": {
+    "message": "No pending upload on this device.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncCapacityError": {
+    "message": "This upload would exceed Chrome Sync storage limits. Your links remain on this device. Clean unused data, or rebuild the cloud after updating all devices. Larger collections can use Local Only and file exports.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncRateError": {
+    "message": "The sync service is receiving too many requests. Your data remains local and will retry later.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncNetworkError": {
+    "message": "The sync service could not be reached. Your data remains local and will retry later.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncIntegrityError": {
+    "message": "Cloud data is incomplete or failed verification. Local data was preserved. Retry, or rebuild the cloud from a trusted device.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncOperationError": {
+    "message": "The action could not complete. Check storage availability and retry.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncCloudBusy": {
+    "message": "Another device is publishing or recovering its sync data. Local changes remain saved. Retry shortly.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncChangedError": {
+    "message": "Saved or cloud data changed while you reviewed this action. Review it again.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncResetRequired": {
+    "message": "The cloud collection was reset by another device. Use Current Cloud Data to rejoin safely. A local backup will be kept.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncLegacyClientError": {
+    "message": "An older Tabel version wrote to a reset cloud collection. Update or stop all older installations before rebuilding it.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncMissingCloudError": {
+    "message": "The expected cloud data is missing. Automatic upload stopped. Rebuild the cloud from a trusted device.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncRecoveryPending": {
+    "message": "A cloud recovery is pending. Finish it before removing safety backups.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncLocalOnly": {
+    "message": "Choose Chrome Sync before using this action.",
+    "description": "Tabel 2.1 sync and safety interface"
+  },
+  "settingsClearChromeCloud": {
+    "message": "Clear Chrome Sync Storage",
+    "description": "Tabel 2.1 cloud clearing"
+  },
+  "clearChromeReview": {
+    "message": "Remove saved data from Chrome Sync and stop Chrome Sync on this device. Local links will remain. A small reset marker stays in Chrome Sync to protect against old devices. A verified local backup will be created first.",
+    "description": "Tabel 2.1 cloud clearing"
+  },
+  "clearChromeAcknowledgement": {
+    "message": "Other Chrome Sync installations are updated to Tabel 2.1 or have stopped syncing. Older versions can refill Chrome Sync.",
+    "description": "Tabel 2.1 cloud clearing"
+  },
+  "chromeCloudCleared": {
+    "message": "Chrome Sync data cleared. Local links remain. A small reset marker prevents old devices from restoring deleted cloud data.",
+    "description": "Tabel 2.1 cloud clearing"
   }
 }
