@@ -11,7 +11,7 @@
 
 - Primary language: English
 - Category: Productivity, workflow and organization
-- Status: The 2.1.0 update is approved for submission and awaits Chrome Web Store publication.
+- Status: Version 2.1.0 is published on the Chrome Web Store.
 - Name: `Tabel: Tab Manager`
 - Summary: `Organize open tabs into synced visual groups, save memory, and restore them whenever you need.`
 

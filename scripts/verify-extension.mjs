@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { basename, dirname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
@@ -10,11 +10,12 @@ const root = process.env.TABEL_EXTENSION_ROOT ? resolve(process.env.TABEL_EXTENS
 const output = resolve(projectRoot, 'dist/review');
 await mkdir(output, { recursive: true });
 const profile = await mkdtemp(resolve(output, 'extension-profile-'));
-const context = await chromium.launchPersistentContext(profile, {
-  channel: 'chromium', headless: true,
-  args: [`--disable-extensions-except=${root}`, `--load-extension=${root}`]
-});
+let context;
 try {
+  context = await chromium.launchPersistentContext(profile, {
+    channel: 'chromium', headless: true,
+    args: [`--disable-extensions-except=${root}`, `--load-extension=${root}`]
+  });
   let [worker] = context.serviceWorkers();
   worker ||= await context.waitForEvent('serviceworker');
   const id = new URL(worker.url()).hostname;
@@ -128,5 +129,14 @@ try {
   await page.screenshot({ path: resolve(output, 'tabel-2.1-extension-settings.png') });
   console.log('Real extension checks passed: v4-to-v5 migration, stable Store ID, MV3 worker, native storage, background alarm execution, guarded Delete All, backup restoration, and cloud clearing preserve local data. No Google account was used.');
 } finally {
-  await context.close();
+  try {
+    await context?.close();
+  } finally {
+    const profilePath = resolve(profile);
+    if (dirname(profilePath) !== output || !profilePath.startsWith(projectRoot + sep) ||
+        !/^extension-profile-[A-Za-z0-9]+$/.test(basename(profilePath))) {
+      throw new Error('Refusing to remove an unexpected test profile path');
+    }
+    await rm(profilePath, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+  }
 }

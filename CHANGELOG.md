@@ -2,6 +2,7 @@
 
 ## 2.1.0, 2026-10-12
 
+- Now available on the [Chrome Web Store](https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd).
 - Added Local Only mode alongside Chrome Sync.
 - Added resumable Chrome Sync compaction and reset checkpoints for recovery from full storage or interrupted writes.
 - Added separate upload/download timestamps, pending/error state, deletion history diagnostics, and manual sync retry.
