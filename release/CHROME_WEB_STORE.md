@@ -1,4 +1,4 @@
-# Tabel 2.1.0, Chrome Web Store release material
+# Tabel 2.2.0, Chrome Web Store release material
 
 ## URLs
 
@@ -12,6 +12,7 @@
 - Primary language: English
 - Category: Productivity, workflow and organization
 - Status: Version 2.1.0 is published on the Chrome Web Store.
+- Update: Version 2.2.0 is released on GitHub and ready for Store submission.
 - Name: `Tabel: Tab Manager`
 - Summary: `Organize open tabs into synced visual groups, save memory, and restore them whenever you need.`
 
@@ -39,7 +40,10 @@ Key features:
 - Use System, Light, or Dark theme and three density levels.
 - Adjust font size, favicon size, default group width, and URL display.
 - View local tab and group statistics.
-- View separate upload/download times, pending errors, deletion history, and storage use.
+- Use redesigned Settings with General, Appearance, Sync & backups, and About sections, a live appearance preview, and project links.
+- Distinguish a local upload from receipt confirmed by another updated device.
+- Compare local and Chrome copies before recovering data.
+- View separate upload/download times, pending errors, deletion history, and storage use under Recovery tools.
 
 Tabel uses no Tabel account, advertisements, remote code, or developer-operated server.
 
@@ -98,9 +102,9 @@ Data use:
 
 Certify every applicable Limited Use statement in the Privacy practices tab.
 
-## Version 2.1.0 release notes
+## Version 2.2.0 release notes
 
-Tabel 2.1.0 adds recovery from full Chrome Sync, separate sync status, safe cloud clearing/reset, and typed Delete All with verified local backups. Repeated capture preserves tab IDs to reduce unnecessary deletion history.
+Tabel 2.2.0 redesigns Settings to match the Dashboard, adds four focused sections, live appearance previews, and project links. Sync status distinguishes local uploads from receipt on another updated device. Import synchronization and stale cleanup are protected against overlapping changes. Recovery compares both copies before replacement, with verified local backups and typed confirmation.
 
 ## Distribution
 
@@ -113,6 +117,7 @@ Tabel 2.1.0 adds recovery from full Chrome Sync, separate sync status, safe clou
 - Store icon: `icons/icon128.png`
 - Screenshot: `docs/assets/dashboard-preview.png`
 - Settings screenshot: `docs/assets/settings-preview.png`
+- Sync and backups screenshot: `release/assets/settings-preview-1280x800.png`
 - Delete All confirmation screenshot: `release/assets/delete-all-confirmation-1280x800.png`
 - Small promo tile: `release/assets/promo-tile-440x280.png`
 
@@ -124,13 +129,13 @@ Run:
 npm run build:release
 ```
 
-The 2.1.0 package is `dist/tabel-2.1.0-chrome-web-store.zip`. It excludes tests, documentation, and release files. The official public key and extension ID are preserved.
+The package is `dist/tabel-2.2.0-chrome-web-store.zip`, or the ZIP attached to the v2.2.0 GitHub release. It excludes tests, documentation, and release files. The official public key and extension ID are preserved.
 
 The GitHub release workflow runs when a new version tag is pushed, rebuilds the package, runs all tests, and attaches the ZIP to the GitHub Release. The tag must be `v` followed by the version in `manifest.json` and `package.json`. Do not reuse an existing release tag.
 
 The published Store item ID is `hmdklfckhfiobokdglandjdndgaefngd`. Its public key is configured in `manifest.json` and checked by the test suite. Preserve this identity for future updates.
 
-Before submission, verify Chrome Sync on two test installations with a dedicated test account. Use the updated 2.1 Store screenshots with demonstration data. Verify the public privacy/support pages and disclose the Chrome Sync limit, safety backup retention, and older-version reset requirements.
+Use the updated 2.2 Store screenshots with demonstration data. Public privacy and support pages disclose the Chrome Sync limit, safety backup retention, and older-version reset requirements. Automated transport tests cover overlapping imports and recovery. Signed-in delivery between two computers is a separate optional verification and has not been performed for 2.2.0.
 
 ## Future extension updates
 

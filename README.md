@@ -2,7 +2,7 @@
 
 Tabel is a Chrome extension that saves and organizes open tabs into visual groups.
 
-Version 2.1.0. Manifest V3. English interface. Available on the Chrome Web Store.
+Version 2.2.0 is available on GitHub. The Chrome Web Store update is pending submission. Manifest V3. English interface.
 
 [Add to Chrome](https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd) | [Official website](https://kyriakosgian.github.io/Tabel/) | [Report a problem](https://github.com/KyriakosGian/Tabel/issues) | [Releases](https://github.com/KyriakosGian/Tabel/releases)
 
@@ -12,6 +12,10 @@ Version 2.1.0. Manifest V3. English interface. Available on the Chrome Web Store
 
 ## Features
 
+- Organize Settings into General, Appearance, Sync & backups, and About, using the Dashboard visual foundation.
+- Find project, GitHub, release, support, and privacy links in the Settings footer.
+- Protect imported collections against stale uploads from another device.
+- Confirm receipt from another updated device and review both copies before recovery.
 - Save non-pinned tabs from the active window.
 - Save the most recently active eligible tab, selected open tabs, or eligible tabs from every window, then close them after successful persistence.
 - Add captured tabs to the top of an existing unlocked group.
@@ -50,6 +54,10 @@ npm test
 ```
 
 The test suite uses the built-in `node:test` runner and requires no third-party packages.
+
+## Optional synchronization validation
+
+Build the isolated test package with `./scripts/build-release.ps1 -TestBuild`. Load the same test ZIP as an unpacked extension on both computers. Its stable test ID and the name Tabel Sync Test keep it separate from the Store installation. Import a backup on one test installation only, confirm the saved links arrive on the second, then rename a group on the second and check the return change. Do not reset or clear either copy during this test. Do not upload the test ZIP to the Store.
 
 ## Public release
 
@@ -104,7 +112,7 @@ Tabel/
 
 ## Browser validation
 
-`npm test` runs the dependency-free regression suite. `npm run test:ui` requires Playwright and its Chromium browser and checks confirmations, real IndexedDB backups, and Chrome cloud recovery with synthetic data. `npm run test:extension` loads the real extension in a new unsigned-in Chromium profile and checks database migration, native Chrome storage, alarms, and recovery. `TABEL_PLAYWRIGHT_PATH` can point to an existing Playwright package, and `PLAYWRIGHT_BROWSERS_PATH` can point to an existing browser installation.
+`npm test` runs the dependency-free regression suite. `npm run test:ui` requires Playwright and the installed Chrome browser and checks navigation, preference saving, confirmations, real IndexedDB backups, and Chrome cloud recovery with synthetic data. `npm run test:extension` loads the real extension in a temporary unsigned-in Chrome profile and checks database migration, native Chrome storage, alarms, and recovery. `TABEL_PLAYWRIGHT_PATH` can point to an existing Playwright package. Neither browser check downloads a browser or uses a personal Chrome profile.
 
 ## License
 

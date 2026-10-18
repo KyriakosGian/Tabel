@@ -9,7 +9,7 @@ import { validateData } from '../dashboard/lib/validateData.js';
 import { SyncManager, SYNC_STATUS_KEY } from '../dashboard/lib/sync.js';
 import { createBackup, latestBackup, verifyBackup } from '../dashboard/lib/backups.js';
 import { checksum, readConfig, snapshotData, SYNC_CONFIG_KEY, SyncError, syncErrorCode } from '../dashboard/lib/syncCommon.js';
-import { confirmAction } from './confirmation.js';
+import { chooseRecoverySource, confirmAction } from './confirmation.js';
 import {
   applyAppearance,
   APPEARANCE_DEFAULTS,
@@ -31,11 +31,14 @@ class OptionsController {
     this._colorSchemeQuery = window.matchMedia('(prefers-color-scheme: light)');
     this.sync = new SyncManager();
     this._busy = false;
+    this._settingsWrites = Promise.resolve();
+    this._saveRequest = 0;
     this._init();
   }
 
   async _init() {
     this._applyI18n();
+    this._setupNavigation();
     await this._loadSettings();
     await this._loadStatistics();
     await this._loadSyncStatus();
@@ -54,6 +57,27 @@ class OptionsController {
     document.documentElement.lang = 'en';
     document.title = chrome.i18n.getMessage('settingsTitle') || 'Tabel Settings';
     document.getElementById('app-version').textContent = `Tabel v${chrome.runtime.getManifest().version}`;
+  }
+
+  /** Switch between focused Settings sections without changing preferences. */
+  _setupNavigation() {
+    const panels = [...document.querySelectorAll('[data-settings-panel]')];
+    const links = [...document.querySelectorAll('[data-settings-link]')];
+    const show = (focus = false) => {
+      const requested = window.location.hash.slice(1);
+      const key = panels.some(panel => panel.dataset.settingsPanel === requested) ? requested : 'general';
+      for (const panel of panels) panel.hidden = panel.dataset.settingsPanel !== key;
+      for (const link of links) {
+        if (link.dataset.settingsLink === key) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      }
+      if (focus) {
+        document.querySelector(`[data-settings-panel="${key}"] [data-panel-title]`).focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
+    };
+    window.addEventListener('hashchange', () => show(true));
+    show();
   }
 
   /** Load settings from storage */
@@ -80,14 +104,28 @@ class OptionsController {
 
   /** Save settings to storage */
   async _saveSettings() {
-    await chrome.storage.local.set({ settings: this.settings });
-    this._applyStyles();
-
-    // Broadcast setting changes for real-time sync with dashboard.
-    // .catch swallows the rejection when no dashboard page is open to receive it.
-    chrome.runtime.sendMessage({ type: 'SETTINGS_CHANGED', settings: this.settings }).catch(() => {});
-
-    this._showToast(chrome.i18n.getMessage('settingsSaved') || 'Settings saved!');
+    const request = ++this._saveRequest;
+    const settings = { ...this.settings };
+    const indicator = document.getElementById('settings-save-state');
+    indicator.dataset.state = 'saving';
+    indicator.textContent = chrome.i18n.getMessage('settingsSaving');
+    const write = this._settingsWrites.catch(() => {}).then(() => chrome.storage.local.set({ settings }));
+    this._settingsWrites = write;
+    try {
+      await write;
+      this._applyStyles();
+      chrome.runtime.sendMessage({ type: 'SETTINGS_CHANGED', settings }).catch(() => {});
+      if (request === this._saveRequest) {
+        indicator.dataset.state = 'saved';
+        indicator.textContent = chrome.i18n.getMessage('settingsSavedShort');
+      }
+    } catch {
+      if (request === this._saveRequest) {
+        indicator.dataset.state = 'error';
+        indicator.textContent = chrome.i18n.getMessage('settingsSaveFailed');
+        this._showToast(chrome.i18n.getMessage('settingsSaveFailed'), 'error');
+      }
+    }
   }
 
   /** Apply styling variables to DocumentElement */
@@ -233,7 +271,7 @@ class OptionsController {
       await this.sync.clearChromeCloud();
       this._showToast(chrome.i18n.getMessage('chromeCloudCleared'));
     }));
-    document.getElementById('btn-adopt-cloud').addEventListener('click', () => this._runAction(() => this._adoptCloud()));
+    document.getElementById('btn-adopt-cloud').addEventListener('click', () => this._runAction(() => this._reviewRecovery()));
     document.getElementById('btn-restore-backup').addEventListener('click', () => this._runAction(() => this._restoreBackup()));
     document.getElementById('btn-clear-backups').addEventListener('click', () => this._runAction(async () => {
       if (!await confirmAction({
@@ -291,7 +329,7 @@ class OptionsController {
       const current = await db.exportAll();
       if (!await confirmAction({
         title: chrome.i18n.getMessage('settingsImport'),
-        description: chrome.i18n.getMessage('confirmImport'),
+        description: chrome.i18n.getMessage('confirmImport', [String(data.items.length), String(current.items.length)]),
         actionLabel: chrome.i18n.getMessage('settingsImport')
       })) return;
 
@@ -348,7 +386,7 @@ class OptionsController {
   async _runAction(action) {
     if (this._busy) return;
     this._busy = true;
-    const controls = document.querySelectorAll('.sync-actions button, #setting-sync-provider, #btn-import, #btn-delete-all, #btn-restore-backup, #btn-clear-backups');
+    const controls = document.querySelectorAll('.sync-actions button, #btn-clean-sync, #setting-sync-provider, #btn-import, #btn-delete-all, #btn-restore-backup, #btn-clear-backups');
     controls.forEach(control => { control.disabled = true; });
     try {
       await action();
@@ -378,9 +416,16 @@ class OptionsController {
     }
   }
 
-  async _resetCloud() {
+  async _reviewRecovery() {
+    const preview = await this.sync.previewRecovery();
+    const source = await chooseRecoverySource(preview);
+    if (source === 'local') await this._resetCloud(preview);
+    else if (source === 'cloud') await this._adoptCloud(preview);
+  }
+
+  async _resetCloud(preview = null) {
     const config = await readConfig();
-    const current = await db.exportAll();
+    const current = preview?.local || await db.exportAll();
     if (!await confirmAction({
       title: chrome.i18n.getMessage('settingsResetCloud'),
       description: chrome.i18n.getMessage('resetCloudReview', [String(current.groups.length), String(current.items.length)]),
@@ -388,19 +433,21 @@ class OptionsController {
       checkboxLabel: config.provider === 'chrome' ? chrome.i18n.getMessage('resetLegacyAcknowledgement') : ''
     })) return;
     await this._requireUnchanged(current, await db.exportAll());
-    await this.sync.resetCloud({ expectedCurrent: current });
-    await this._syncDataAndRefresh();
+    await this.sync.resetCloud({ expectedCurrent: current, expectedCloudState: preview?.cloudState });
+    if (!await this._syncDataAndRefresh()) throw new SyncError(this.sync.lastError || 'syncOperationError');
     this._showToast(chrome.i18n.getMessage('cloudResetComplete'));
   }
 
-  async _adoptCloud() {
+  async _adoptCloud(preview = null) {
+    preview ||= await this.sync.previewRecovery();
+    if (!preview.cloud) throw new SyncError(preview.cloudError || 'syncCloudBusy');
     if (!await confirmAction({
       title: chrome.i18n.getMessage('settingsAdoptCloud'),
-      description: chrome.i18n.getMessage('adoptCloudReview'),
+      description: chrome.i18n.getMessage('adoptCloudReview', [String(preview.local.items.length), String(preview.cloud.items.length)]),
       phrase: 'REPLACE', actionLabel: chrome.i18n.getMessage('settingsAdoptCloud')
     })) return;
-    await this.sync.adoptCloud();
-    await this._syncDataAndRefresh();
+    await this.sync.adoptCloud({ expectedCurrent: preview.local, expectedCloudState: preview.cloudState });
+    if (!await this._syncDataAndRefresh()) throw new SyncError(this.sync.lastError || 'syncOperationError');
     this._showToast(chrome.i18n.getMessage('syncComplete'));
   }
 
@@ -494,22 +541,34 @@ class OptionsController {
       meter.setAttribute('aria-valuenow', percent.toFixed(1));
       meter.title = `${percent.toFixed(1)}%`;
       document.getElementById('setting-sync-provider').value = config.provider;
+      document.getElementById('sync-section').dataset.provider = config.provider;
       const state = document.getElementById('settings-sync-state');
       state.dataset.error = String(!!status.error && config.provider !== 'local');
+      const retrying = ['syncCloudBusy', 'syncRateError', 'syncNetworkError', 'syncChangedError'].includes(status.error);
+      state.dataset.tone = config.provider === 'local' ? 'neutral' : status.error ?
+        (retrying ? 'waiting' : 'error') : status.pending ? 'waiting' : diagnostics.remoteReceiptCount > 0 ? 'confirmed' : 'neutral';
       state.textContent = config.provider === 'local' ? chrome.i18n.getMessage('syncLocalStatus') :
         status.error ? chrome.i18n.getMessage(status.error) :
         status.pending ? chrome.i18n.getMessage('syncPendingStatus') :
-        chrome.i18n.getMessage('syncReadyStatus');
+        chrome.i18n.getMessage(diagnostics.remoteReceiptCount > 0 ? 'syncConfirmedStatus' : 'syncReadyStatus');
+      const recoveryErrors = ['syncResetRequired', 'syncLegacyClientError', 'syncMissingCloudError', 'syncIntegrityError', 'syncCapacityError'];
+      document.getElementById('settings-sync-next-step').textContent = chrome.i18n.getMessage(
+        config.provider === 'local' ? 'syncLocalHint' : retrying ? 'syncRetryHint' :
+          recoveryErrors.includes(status.error) ? 'syncRecoveryHint' : 'syncEverydayHint');
+      document.getElementById('sync-local-links').textContent = diagnostics.localLinkCount;
+      document.getElementById('sync-receipt-status').textContent = chrome.i18n.getMessage(
+        diagnostics.remoteReceiptCount > 0 ? 'syncReceiptConfirmed' : 'syncReceiptUnconfirmed');
       document.getElementById('sync-active-bytes').textContent = `${formatKb(diagnostics.activeBytes)} KB`;
       document.getElementById('sync-deletion-bytes').textContent = `${formatKb(diagnostics.deletionBytes)} KB`;
       document.getElementById('sync-deletion-count').textContent = diagnostics.deletionCount;
       document.getElementById('sync-unused-bytes').textContent = `${formatKb(diagnostics.unusedBytes)} KB`;
       document.getElementById('sync-metadata-bytes').textContent = `${formatKb(diagnostics.metadataBytes)} KB`;
       document.getElementById('sync-blocking-devices').textContent = diagnostics.blockingDevices;
+      document.getElementById('sync-receiving-devices').textContent = diagnostics.remoteReceiptCount;
       for (const id of ['btn-sync-now', 'btn-clean-sync', 'btn-reset-cloud']) {
         document.getElementById(id).disabled = this._busy || config.provider === 'local';
       }
-      document.getElementById('btn-adopt-cloud').hidden = !['syncResetRequired', 'syncLegacyClientError'].includes(status.error);
+      document.getElementById('btn-adopt-cloud').hidden = config.provider === 'local' || !recoveryErrors.includes(status.error);
     } catch (error) {
       console.warn('[Options] Failed to load sync status:', error);
     }

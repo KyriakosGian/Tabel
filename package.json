@@ -1,6 +1,6 @@
 {
   "name": "tabel-extension",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -19,5 +19,8 @@
     "build:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-release.ps1",
     "test:ui": "node scripts/verify-ui.mjs",
     "test:extension": "node scripts/verify-extension.mjs"
+  },
+  "config": {
+    "testExtensionPublicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgmHbfMoxMMTYDWOT6ODo1aylm1cy4YOTUFY5gjNkrtL41vDxCS7VWlXl4VRf1dnvR5PoNu8iUT/MYhUFK23YwvAtcDbb5vgc3M3HxzCnEq+aGBovAybbmAAnPr1HJIaPm2kWLiknwQ2OeP9Hxh0lhAaRQCthPWOs4jairCBXHFSYegyTFOEwpTVgx1mKftQ7NzgzqxCrfDnAaqhsiJIHrdBuJ/UbSTOu33c1l/s/mr2fwcCXGVt6laUaN+AKZLCsBw8b2JZPC2k5mN1153unmqrvyLmY2c4HLmBcpY0oeuaFlk6azs39GAIW0tecejzL5BxWgzszgNyRtL5ZVXvE5wIDAQAB"
   }
 }

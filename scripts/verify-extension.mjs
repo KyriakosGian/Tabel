@@ -1,26 +1,37 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
-import { basename, dirname, resolve, sep } from 'node:path';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { basename, dirname, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 const { chromium } = createRequire(import.meta.url)(process.env.TABEL_PLAYWRIGHT_PATH || 'playwright');
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const root = process.env.TABEL_EXTENSION_ROOT ? resolve(process.env.TABEL_EXTENSION_ROOT) : projectRoot;
-const output = resolve(projectRoot, 'dist/review');
+const manifest = JSON.parse(await readFile(resolve(root, 'manifest.json'), 'utf8'));
+const output = process.env.TABEL_EXTENSION_OUTPUT ? resolve(process.env.TABEL_EXTENSION_OUTPUT) :
+  await mkdtemp(resolve(tmpdir(), 'tabel-extension-'));
 await mkdir(output, { recursive: true });
 const profile = await mkdtemp(resolve(output, 'extension-profile-'));
 let context;
 try {
   context = await chromium.launchPersistentContext(profile, {
-    channel: 'chromium', headless: true,
-    args: [`--disable-extensions-except=${root}`, `--load-extension=${root}`]
+    channel: 'chrome', headless: true,
+    ignoreDefaultArgs: ['--disable-extensions'],
+    args: ['--enable-unsafe-extension-debugging']
   });
-  let [worker] = context.serviceWorkers();
-  worker ||= await context.waitForEvent('serviceworker');
-  const id = new URL(worker.url()).hostname;
+  const protocol = await context.browser().newBrowserCDPSession();
+  const { id } = await protocol.send('Extensions.loadUnpacked', { path: root });
   assert.equal(id, 'hmdklfckhfiobokdglandjdndgaefngd');
   const page = await context.newPage();
+  const waitForExtension = async (predicate, argument) => {
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      if (await page.evaluate(predicate, argument)) return;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error('Timed out waiting for native extension state');
+  };
   await page.setViewportSize({ width: 1280, height: 800 });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -73,16 +84,21 @@ try {
   });
   await page.goto(`chrome-extension://${id}/options/options.html`);
   await page.waitForFunction(() => document.getElementById('settings-stat-tabs').textContent === '3');
-  assert.equal(await page.locator('#app-version').textContent(), 'Tabel v2.1.0');
+  assert.equal(await page.locator('#app-version').textContent(), `Tabel v${manifest.version}`);
   assert.deepEqual(await page.locator('#setting-sync-provider option').evaluateAll(options => options.map(option => option.value)), ['local', 'chrome']);
   const permissions = await page.evaluate(() => chrome.runtime.getManifest());
   assert.equal(permissions.optional_permissions, undefined);
   assert.equal(permissions.optional_host_permissions, undefined);
   assert.equal(permissions.oauth2, undefined);
+  await page.locator('a[href="#sync"]').click();
   await page.locator('#btn-sync-now').click();
-  await page.waitForFunction(() => document.getElementById('settings-sync-state').textContent.includes('No pending'));
+  await waitForExtension(async () => {
+    const cloud = await chrome.storage.sync.get('tabel_sync_meta');
+    const local = await chrome.storage.local.get('tabelSyncStatus');
+    return cloud.tabel_sync_meta?.checksum && local.tabelSyncStatus?.pending === false;
+  });
   const state = await page.evaluate(async () => ({
-    cloud: await chrome.storage.sync.get(null),
+    cloud: await chrome.storage.sync.get(['tabel_sync_meta']),
     local: await chrome.storage.local.get(['tabelDeviceId', 'tabelSyncStatus']),
     alarms: await chrome.alarms.getAll()
   }));
@@ -91,12 +107,14 @@ try {
   assert.equal(state.local.tabelSyncStatus.pending, false);
   assert.ok(state.alarms.some(alarm => alarm.name === 'tabel-sync-poll'));
   await page.evaluate(() => chrome.alarms.create('tabel-sync-poll', { when: Date.now() - 1 }));
-  await page.waitForFunction(async previous => {
+  await waitForExtension(async previous => {
     const result = await chrome.storage.local.get('tabelSyncStatus');
     return result.tabelSyncStatus.lastPullAt > previous && !result.tabelSyncStatus.error;
   }, state.local.tabelSyncStatus.lastPullAt || 0);
   await page.evaluate(() => chrome.alarms.create('tabel-sync-poll', { periodInMinutes: 5 }));
+  await page.locator('a[href="#appearance"]').click();
   await page.locator('#setting-theme').selectOption('dark');
+  await page.locator('a[href="#sync"]').click();
   await page.evaluate(() => {
     const section = document.getElementById('setting-sync-provider').closest('.settings-section');
     window.scrollTo({ top: section.getBoundingClientRect().top + scrollY - 88, behavior: 'instant' });
@@ -104,6 +122,7 @@ try {
     document.activeElement?.blur();
   });
   await page.screenshot({ path: resolve(output, 'settings-preview-1280x800.png'), animations: 'disabled' });
+  await page.locator('#data-danger > summary').click();
   await page.locator('#btn-delete-all').click();
   const dialog = page.locator('dialog');
   await dialog.waitFor({ state: 'visible' });
@@ -115,28 +134,34 @@ try {
   await page.locator('#btn-restore-backup').click();
   await dialog.getByRole('button', { name: 'Restore Last Backup', exact: true }).click();
   await page.waitForFunction(() => document.getElementById('settings-stat-tabs').textContent === '3');
+  await page.locator('#sync-advanced > summary').click();
   await page.locator('#btn-clear-chrome').click();
   await dialog.locator('input[type=text]').fill('CLEAR');
   await dialog.locator('input[type=checkbox]').check();
   await dialog.getByRole('button', { name: 'Clear Chrome Sync Storage', exact: true }).click();
   await page.waitForFunction(() => document.getElementById('setting-sync-provider').value === 'local');
   assert.equal(await page.locator('#settings-stat-tabs').textContent(), '3');
-  await page.waitForFunction(async () => (await chrome.alarms.getAll()).every(alarm => alarm.name !== 'tabel-sync-poll'));
+  await waitForExtension(async () => (await chrome.alarms.getAll()).every(alarm => alarm.name !== 'tabel-sync-poll'));
   const cloud = await page.evaluate(() => chrome.storage.sync.get(null));
   assert.equal(JSON.parse(cloud.tabel_sync_chunk_0).items.length, 0);
   assert.deepEqual(errors, []);
   await page.locator('#settings-sync-state').scrollIntoViewIfNeeded();
-  await page.screenshot({ path: resolve(output, 'tabel-2.1-extension-settings.png') });
   console.log('Real extension checks passed: v4-to-v5 migration, stable Store ID, MV3 worker, native storage, background alarm execution, guarded Delete All, backup restoration, and cloud clearing preserve local data. No Google account was used.');
 } finally {
   try {
     await context?.close();
   } finally {
     const profilePath = resolve(profile);
-    if (dirname(profilePath) !== output || !profilePath.startsWith(projectRoot + sep) ||
+    if (dirname(profilePath) !== output ||
         !/^extension-profile-[A-Za-z0-9]+$/.test(basename(profilePath))) {
       throw new Error('Refusing to remove an unexpected test profile path');
     }
     await rm(profilePath, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    if (!process.env.TABEL_EXTENSION_OUTPUT) {
+      if (dirname(output) !== resolve(tmpdir()) || !/^tabel-extension-[A-Za-z0-9]+$/.test(basename(output))) {
+        throw new Error('Refusing to remove an unexpected test output path');
+      }
+      await rm(output, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    }
   }
 }

@@ -72,12 +72,14 @@ test('English locale covers direct i18n references', () => {
     'dashboard/components/TabGroup.js',
     'dashboard/components/TabItem.js',
     'options/options.html',
-    'options/options.js'
+    'options/options.js',
+    'options/confirmation.js'
   ].map(read).join('\n');
 
   const keys = new Set();
   for (const match of sources.matchAll(/__MSG_([A-Za-z0-9_]+)__/g)) keys.add(match[1]);
   for (const match of sources.matchAll(/getMessage\(['"]([^'"]+)['"]/g)) keys.add(match[1]);
+  for (const match of sources.matchAll(/message\(['"]([^'"]+)['"]/g)) keys.add(match[1]);
   for (const match of sources.matchAll(/data-i18n(?:-placeholder|-title)?=['"]([^'"]+)['"]/g)) keys.add(match[1]);
 
   for (const key of keys) assert.equal(key in en, true, `Missing locale key ${key}`);
@@ -123,7 +125,7 @@ test('appearance settings support system theme, density, URL modes, sizing, and 
   assert.match(optionsSource, /APPEARANCE_DEFAULTS/);
   assert.match(dashboardSource, /applyAppearance/);
   assert.match(dashboardCss, /\[data-tab-url-mode='hidden'\]/);
-  assert.match(dashboardCss, /\[data-density='ultraCompact'\]/);
+  assert.match(read('styles/tabel.css'), /\[data-density='ultraCompact'\]/);
   assert.match(tabItemSource, /tab-item__domain--host/);
   assert.match(tabItemSource, /tab-item__domain--full/);
 });

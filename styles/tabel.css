@@ -221,3 +221,20 @@ select {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Shared density for Dashboard rows and Settings controls. */
+[data-density='compact'] {
+  --density-group-padding-y: 11px;
+  --density-group-padding-x: 16px;
+  --density-list-padding: 6px;
+  --density-tab-padding-y: 5px;
+  --density-tab-padding-x: 9px;
+}
+
+[data-density='ultraCompact'] {
+  --density-group-padding-y: 7px;
+  --density-group-padding-x: 12px;
+  --density-list-padding: 3px;
+  --density-tab-padding-y: 2px;
+  --density-tab-padding-x: 6px;
+}

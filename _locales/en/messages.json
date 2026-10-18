@@ -148,7 +148,7 @@
     "description": "Import success message"
   },
   "confirmImport": {
-    "message": "Import replaces your saved groups and tabs on this device and syncs the changes to your other devices. Export a backup first if you want to keep your current data. Continue?",
+    "message": "Import $1 saved links and replace this device's $2 links. A local safety backup is kept first. Import on one computer only; the changes then synchronize to your other devices when Chrome Sync is enabled.",
     "description": "Confirmation before replacing saved data"
   },
   "importError": {
@@ -583,11 +583,11 @@
     "description": "Tabel 2.1 sync and safety interface"
   },
   "settingsLastUpload": {
-    "message": "Last successful upload",
+    "message": "Last saved to Chrome Sync on this device",
     "description": "Tabel 2.1 sync and safety interface"
   },
   "settingsLastDownload": {
-    "message": "Last successful download",
+    "message": "Last verified download",
     "description": "Tabel 2.1 sync and safety interface"
   },
   "settingsChromeQuota": {
@@ -623,7 +623,7 @@
     "description": "Tabel 2.1 sync and safety interface"
   },
   "settingsSyncNow": {
-    "message": "Sync Now / Retry",
+    "message": "Sync now",
     "description": "Tabel 2.1 sync and safety interface"
   },
   "settingsCleanSync": {
@@ -675,7 +675,7 @@
     "description": "Tabel 2.1 sync and safety interface"
   },
   "syncComplete": {
-    "message": "Sync completed on this device.",
+    "message": "Saved to Chrome Sync on this device. See Sync for confirmation from other devices.",
     "description": "Tabel 2.1 sync and safety interface"
   },
   "syncCleanupComplete": {
@@ -703,7 +703,7 @@
     "description": "Tabel 2.1 sync and safety interface"
   },
   "adoptCloudReview": {
-    "message": "Replace this device's saved data with the current cloud collection. A verified local backup of this device's data will be kept. Old local records will not merge automatically.",
+    "message": "Replace this device's $1 saved links with the $2 links from Chrome Sync. A verified local safety backup will be kept. The current local links will not merge into the chosen copy.",
     "description": "Tabel 2.1 sync and safety interface"
   },
   "restoreBackupReview": {
@@ -739,8 +739,16 @@
     "description": "Tabel 2.1 sync and safety interface"
   },
   "syncReadyStatus": {
-    "message": "No pending upload on this device.",
+    "message": "Saved on this device. Waiting for confirmation from another device.",
     "description": "Tabel 2.1 sync and safety interface"
+  },
+  "syncConfirmedStatus": {
+    "message": "Another device has confirmed receiving this saved data.",
+    "description": "Confirmed receipt of the current collection by another device"
+  },
+  "settingsReceivingDevices": {
+    "message": "Other devices that confirmed receipt",
+    "description": "Number of other devices that reported receiving the current collection"
   },
   "syncCapacityError": {
     "message": "This upload would exceed Chrome Sync storage limits. Your links remain on this device. Clean unused data, or rebuild the cloud after updating all devices. Larger collections can use Local Only and file exports.",
@@ -763,7 +771,7 @@
     "description": "Tabel 2.1 sync and safety interface"
   },
   "syncCloudBusy": {
-    "message": "Another device is publishing or recovering its sync data. Local changes remain saved. Retry shortly.",
+    "message": "Changes are still arriving. Your links remain saved and Tabel will retry automatically.",
     "description": "Tabel 2.1 sync and safety interface"
   },
   "syncChangedError": {
@@ -771,11 +779,11 @@
     "description": "Tabel 2.1 sync and safety interface"
   },
   "syncResetRequired": {
-    "message": "The cloud collection was reset by another device. Use Current Cloud Data to rejoin safely. A local backup will be kept.",
+    "message": "This device and Chrome Sync use different collections. Review recovery to choose which copy to keep.",
     "description": "Tabel 2.1 sync and safety interface"
   },
   "syncLegacyClientError": {
-    "message": "An older Tabel version wrote to a reset cloud collection. Update or stop all older installations before rebuilding it.",
+    "message": "Chrome Sync contains data without the current reset marker. This may be a delayed update or an older installation. Local data was preserved.",
     "description": "Tabel 2.1 sync and safety interface"
   },
   "syncMissingCloudError": {
@@ -805,5 +813,155 @@
   "chromeCloudCleared": {
     "message": "Chrome Sync data cleared. Local links remain. A small reset marker prevents old devices from restoring deleted cloud data.",
     "description": "Tabel 2.1 cloud clearing"
+  },
+  "settingsLocalLinks": {
+    "message": "Saved links on this device"
+  },
+  "settingsReceiptStatus": {
+    "message": "Receipt by another device"
+  },
+  "syncReceiptConfirmed": {
+    "message": "Confirmed"
+  },
+  "syncReceiptUnconfirmed": {
+    "message": "Not confirmed yet"
+  },
+  "settingsAdvancedSync": {
+    "message": "Advanced sync tools"
+  },
+  "settingsAdvancedSyncDesc": {
+    "message": "These tools are for recovery. Normal saving and importing synchronize automatically. Rebuilding or clearing the cloud changes the collection used by your other devices."
+  },
+  "settingsReviewRecovery": {
+    "message": "Review recovery"
+  },
+  "recoveryIntroduction": {
+    "message": "Choose the copy containing the links you want to keep. Nothing changes until the next confirmation. A local safety backup will be kept."
+  },
+  "recoveryThisDevice": {
+    "message": "This device"
+  },
+  "recoveryChromeCopy": {
+    "message": "Chrome Sync copy"
+  },
+  "recoveryCopySummary": {
+    "message": "Groups: $1. Saved links: $2."
+  },
+  "recoveryCloudUnavailable": {
+    "message": "This copy is incomplete or cannot be verified yet."
+  },
+  "recoveryKeepDevice": {
+    "message": "Keep this device's links"
+  },
+  "recoveryUseChrome": {
+    "message": "Use the Chrome Sync links"
+  },
+  "recoveryEmptyHint": {
+    "message": "Empty or unverified copies cannot be selected here. If both copies are empty, cancel and import a saved backup. Rebuilding from this device will require your other devices to rejoin."
+  },
+  "syncLocalHint": {
+    "message": "Links stay on this device. Choose Chrome Sync to share them between your computers."
+  },
+  "syncRetryHint": {
+    "message": "Keep Chrome open. Tabel retries automatically. Ordinary delays do not require resetting or clearing your collection."
+  },
+  "syncRecoveryHint": {
+    "message": "Review recovery to compare the copies before choosing which links to keep."
+  },
+  "syncEverydayHint": {
+    "message": "Save or import on one computer. Other devices receive changes automatically while Chrome is open. Receipt confirmation requires Tabel 2.2 or newer on the receiving device."
+  },
+  "settingsNavTitle": {
+    "message": "Settings"
+  },
+  "settingsGeneralTitle": {
+    "message": "General"
+  },
+  "settingsGeneralIntro": {
+    "message": "Choose how Tabel opens, saves, and restores tabs."
+  },
+  "settingsStartupGroup": {
+    "message": "Browser startup"
+  },
+  "settingsAppearanceIntro": {
+    "message": "Adjust the same theme, text sizes, and spacing used in your Dashboard."
+  },
+  "settingsDisplayGroup": {
+    "message": "Display"
+  },
+  "settingsAppearanceAdvanced": {
+    "message": "More appearance options"
+  },
+  "settingsPreviewHint": {
+    "message": "The preview updates as you change a setting."
+  },
+  "settingsSyncBackupTitle": {
+    "message": "Sync & backups"
+  },
+  "settingsSyncBackupIntro": {
+    "message": "Choose where links are saved and manage your backups."
+  },
+  "settingsBackupTitle": {
+    "message": "Backups"
+  },
+  "settingsRecoveryTools": {
+    "message": "Recovery tools"
+  },
+  "settingsTechnicalDetails": {
+    "message": "Technical details"
+  },
+  "settingsCleanSyncHint": {
+    "message": "Remove unused data without replacing your saved links."
+  },
+  "settingsRebuildHintTitle": {
+    "message": "Keep this device's copy"
+  },
+  "settingsRebuildHint": {
+    "message": "Replace the Chrome Sync collection with this device's links. Other devices will need to rejoin."
+  },
+  "settingsClearCloudHintTitle": {
+    "message": "Remove the Chrome Sync copy"
+  },
+  "settingsClearCloudHint": {
+    "message": "Keep the local links and switch this device to Local Only."
+  },
+  "settingsDeleteDataTitle": {
+    "message": "Delete data"
+  },
+  "settingsDeleteDataHint": {
+    "message": "These actions require confirmation. Export a backup if you want a permanent copy."
+  },
+  "settingsClearBackupsHint": {
+    "message": "Remove local safety copies. Your saved links will remain."
+  },
+  "settingsAboutTitle": {
+    "message": "About"
+  },
+  "settingsAboutIntro": {
+    "message": "Your library, privacy information, and project resources."
+  },
+  "settingsProjectWebsite": {
+    "message": "Project website"
+  },
+  "settingsProjectReleases": {
+    "message": "Releases"
+  },
+  "settingsProjectSupport": {
+    "message": "Support"
+  },
+  "settingsAutoSave": {
+    "message": "Changes save automatically"
+  },
+  "settingsSaving": {
+    "message": "Saving..."
+  },
+  "settingsSavedShort": {
+    "message": "Saved"
+  },
+  "settingsSaveFailed": {
+    "message": "Changes could not be saved. Retry your last change."
+  },
+  "settingsBackToTabs": {
+    "message": "Back to tabs"
   }
 }

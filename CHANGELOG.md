@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.2.0, 2026-10-18
+
+- Redesign Settings with four focused sections, automatic-save feedback, a live appearance preview, and project links in the footer.
+- Reuse Dashboard typography, maximum width, color tokens, and shared density rules. Keep deletion and recovery tools separate from everyday preferences.
+
+- Stop stale uploads from overwriting newly arrived imports. Recheck the merged snapshot before writing and preserve newer chunks during cleanup.
+- Report incomplete multi-chunk downloads as pending instead of leaving a misleading ready status.
+- Retry partially propagated reset metadata without misidentifying updated devices as legacy clients.
+- Resume background downloads on remote storage changes after the service worker restarts.
+- Report failed uploads after cloud adoption instead of showing a success message.
+- Distinguish local Chrome Sync writes from confirmed receipt by another device. Receipt reporting requires the updated extension on both devices.
+- Simplify Settings with a normal Sync action and a recovery review showing each copy's saved-link count. Keep destructive maintenance tools under Advanced sync tools.
+- Cancel recovery if either reviewed copy changes before confirmation.
+- Provide an isolated test package with a separate stable extension ID for validation on two computers.
+
 ## 2.1.0, 2026-10-12
 
 - Now available on the [Chrome Web Store](https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd).

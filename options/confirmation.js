@@ -1,3 +1,60 @@
+/** Show both copies before reviewing a destructive recovery action. */
+export function chooseRecoverySource(preview) {
+  const previousFocus = document.activeElement;
+  const message = (key, values = []) => chrome.i18n.getMessage(key, values);
+  const dialog = document.createElement('dialog');
+  dialog.className = 'confirmation-dialog recovery-dialog';
+  const title = document.createElement('h2');
+  title.id = 'recovery-title';
+  title.textContent = message('settingsReviewRecovery');
+  dialog.setAttribute('aria-labelledby', title.id);
+  const introduction = document.createElement('p');
+  introduction.textContent = message('recoveryIntroduction');
+  dialog.append(title, introduction);
+  let selected = null;
+  for (const source of ['local', 'cloud']) {
+    const data = preview[source];
+    const card = document.createElement('section');
+    card.className = 'recovery-copy';
+    const heading = document.createElement('h3');
+    heading.textContent = message(source === 'local' ? 'recoveryThisDevice' : 'recoveryChromeCopy');
+    const summary = document.createElement('p');
+    summary.textContent = data ? message('recoveryCopySummary', [String(data.groups.length), String(data.items.length)]) :
+      message('recoveryCloudUnavailable');
+    const button = document.createElement('button');
+    button.className = 'btn';
+    button.type = 'button';
+    button.dataset.source = source;
+    button.textContent = message(source === 'local' ? 'recoveryKeepDevice' : 'recoveryUseChrome');
+    button.disabled = !data || data.items.length === 0;
+    button.addEventListener('click', () => { selected = source; dialog.close(); });
+    card.append(heading, summary, button);
+    dialog.append(card);
+  }
+  const hint = document.createElement('p');
+  hint.className = 'sync-hint';
+  hint.textContent = message('recoveryEmptyHint');
+  const actions = document.createElement('div');
+  actions.className = 'confirmation-actions';
+  const cancel = document.createElement('button');
+  cancel.className = 'btn';
+  cancel.type = 'button';
+  cancel.textContent = message('cancel');
+  cancel.addEventListener('click', () => dialog.close());
+  actions.append(cancel);
+  dialog.append(hint, actions);
+  document.body.append(dialog);
+  return new Promise(resolve => {
+    dialog.addEventListener('close', () => {
+      dialog.remove();
+      previousFocus?.focus();
+      resolve(selected);
+    }, { once: true });
+    dialog.showModal();
+    cancel.focus();
+  });
+}
+
 /** A deliberate confirmation with keyboard cancellation and no implicit Enter. */
 export function confirmAction({ title, description, actionLabel, phrase = '', checkboxLabel = '' }) {
   const previousFocus = document.activeElement;

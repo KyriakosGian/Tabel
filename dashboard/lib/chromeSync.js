@@ -13,7 +13,7 @@
  */
 
 import { db } from './db.js';
-import { checksum, checkedData, getDeviceId, INITIAL_GENERATION, readConfig, SyncError, uniqueId } from './syncCommon.js';
+import { checksum, checkedData, collectionFingerprint, getDeviceId, INITIAL_GENERATION, readConfig, SyncError, uniqueId } from './syncCommon.js';
 import {
   getPrunableTombstoneKeys,
   maxDeletedAt
@@ -112,9 +112,9 @@ export class ChromeSyncStore {
     return pending;
   }
 
-  async _push() {
+  async _push(existing = null) {
     try {
-      const existing = await chrome.storage.sync.get(null);
+      existing ||= await chrome.storage.sync.get(null);
       if (this._guardChrome) {
         await this._guardChrome(existing, await readConfig());
       }
@@ -206,8 +206,7 @@ export class ChromeSyncStore {
         const part = all[CHUNK_PREFIX + i];
         if (typeof part !== 'string') {
           // A chunk is still propagating — bail and retry on the next change event.
-          console.warn('[Sync] Missing chunk', i, '— skipping this pull');
-          return false;
+          throw new SyncError('syncCloudBusy');
         }
         payload += part;
       }
@@ -221,7 +220,10 @@ export class ChromeSyncStore {
 
       const localData = await db.exportAll();
       const now = Date.now();
-      const currentDeviceState = this._currentDeviceState(all, localData.tombstones, now);
+      const currentDeviceState = this._currentDeviceState(all, localData.tombstones, now, {
+        receivedFingerprint: await collectionFingerprint(remoteData),
+        receivedGeneration: meta.generation || INITIAL_GENERATION
+      });
       const {
         states: knownDeviceStates,
         placeholderWrites
@@ -292,7 +294,7 @@ export class ChromeSyncStore {
     if (staleKeys.length) await chrome.storage.sync.remove(staleKeys);
   }
 
-  _currentDeviceState(all, tombstones, now) {
+  _currentDeviceState(all, tombstones, now, receipt = {}) {
     const previous = all[this._deviceStateKey(this.deviceId)];
     return {
       deviceId: this.deviceId,
@@ -300,7 +302,12 @@ export class ChromeSyncStore {
       acknowledgedThrough: Math.max(
         Number(previous?.acknowledgedThrough) || 0,
         maxDeletedAt(tombstones)
-      )
+      ),
+      ...(previous?.receivedFingerprint ? {
+        receivedFingerprint: previous.receivedFingerprint,
+        receivedGeneration: previous.receivedGeneration
+      } : {}),
+      ...receipt
     };
   }
 
@@ -347,6 +354,8 @@ export class ChromeSyncStore {
 
   _shouldWriteDeviceState(previous, current, now) {
     if (!previous) return true;
+    if (previous.receivedFingerprint !== current.receivedFingerprint ||
+        previous.receivedGeneration !== current.receivedGeneration) return true;
     if (
       Number(current.acknowledgedThrough) >
       (Number(previous.acknowledgedThrough) || 0)

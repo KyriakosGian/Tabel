@@ -79,6 +79,26 @@ test('interrupted quota recovery resumes after recreating the manager', async ()
   reopened.dispose();
 });
 
+test('quota recovery never invalidates a newer snapshot received while saving its backup', async () => {
+  const fixture = nearFullFixture();
+  const env = memoryEnvironment(fixture.local, { cloud: fixture.cloud });
+  const saveBackup = db.saveBackup;
+  db.saveBackup = async backup => {
+    await saveBackup(backup);
+    env.cloud.tabel_sync_meta.updatedAt++;
+  };
+  const manager = new SyncManager();
+  try {
+    assert.equal(await manager.pushNow(), false);
+    assert.equal(manager.lastError, 'syncChangedError');
+    assert.equal(env.cloud.tabel_sync_meta.chunkCount, fixture.cloud.tabel_sync_meta.chunkCount);
+    assert.equal(env.writes.length, 0);
+    assert.equal(env.removals.length, 0);
+    assert.equal(await manager.pushNow(), true);
+    assert.equal(env.data.items.length, 1);
+  } finally { manager.dispose(); }
+});
+
 test('a final snapshot over quota leaves the previous cloud intact', async () => {
   const old = sampleData();
   const data = sampleData(30);

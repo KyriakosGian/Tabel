@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-  [string]$OutputDirectory
+  [string]$OutputDirectory,
+  [switch]$TestBuild
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,8 +14,17 @@ $outputRoot = [IO.Path]::GetFullPath($OutputDirectory)
 $manifestPath = Join-Path $projectRoot 'manifest.json'
 $manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath | ConvertFrom-Json
 $version = $manifest.version
+$expectedPublicKey = $manifest.key
+if ($TestBuild) {
+  $package = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $projectRoot 'package.json') | ConvertFrom-Json
+  $expectedPublicKey = $package.config.testExtensionPublicKey
+  if ([string]::IsNullOrWhiteSpace($expectedPublicKey) -or $expectedPublicKey -eq $manifest.key) {
+    throw 'The isolated test package requires its own stable public key.'
+  }
+}
 $stageRoot = Join-Path ([IO.Path]::GetTempPath()) ("tabel-release-" + [guid]::NewGuid().ToString('N'))
-$archivePath = Join-Path $outputRoot ("tabel-$version-chrome-web-store.zip")
+$packageSuffix = if ($TestBuild) { 'test' } else { 'chrome-web-store' }
+$archivePath = Join-Path $outputRoot ("tabel-$version-$packageSuffix.zip")
 
 New-Item -ItemType Directory -Path $stageRoot -Force | Out-Null
 New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
@@ -22,6 +32,12 @@ New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
 try {
   foreach ($file in @('manifest.json', 'background.js')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $file) -Destination $stageRoot
+  }
+  if ($TestBuild) {
+    $manifest.key = $expectedPublicKey
+    $manifest.name = 'Tabel Sync Test'
+    $testManifest = $manifest | ConvertTo-Json -Depth 20
+    [IO.File]::WriteAllText((Join-Path $stageRoot 'manifest.json'), $testManifest, [Text.UTF8Encoding]::new($false))
   }
   Copy-Item -LiteralPath (Join-Path $projectRoot 'background-worker.js') -Destination $stageRoot
   foreach ($directory in @('dashboard', 'options', 'styles', 'icons', '_locales')) {
@@ -72,7 +88,7 @@ try {
     if (
       -not ($packedManifest.PSObject.Properties.Name -contains 'key') -or
       [string]::IsNullOrWhiteSpace($packedManifest.key) -or
-      $packedManifest.key -ne $manifest.key
+      $packedManifest.key -ne $expectedPublicKey
     ) {
       throw 'Release manifest must preserve the configured public key.'
     }

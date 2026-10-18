@@ -3,13 +3,16 @@ import { ChromeSyncStore, CHUNK_PREFIX, DEVICE_STATE_PREFIX, SYNC_META_KEY } fro
 import { createBackup, verifyBackup } from './backups.js';
 import { getPrunableTombstoneKeys, maxDeletedAt } from './tombstoneCleanup.js';
 import {
-  byteSize, checkedData, checksum, INITIAL_GENERATION, readConfig, snapshotData,
+  byteSize, checkedData, checksum, collectionFingerprint, DEVICE_ID_KEY, INITIAL_GENERATION, readConfig, snapshotData,
   storageBytes, SYNC_CONFIG_KEY, SYNC_STATUS_KEY, SyncError, syncErrorCode, uniqueId, updateConfig
 } from './syncCommon.js';
 
 export const SYNC_CONTROL_KEY = 'tabel_sync_control';
 const isChromeKey = key => key === SYNC_META_KEY || key === SYNC_CONTROL_KEY ||
   key.startsWith(CHUNK_PREFIX) || key.startsWith(DEVICE_STATE_PREFIX);
+const snapshotState = all => JSON.stringify(Object.entries(all)
+  .filter(([key]) => isChromeKey(key) && !key.startsWith(DEVICE_STATE_PREFIX))
+  .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
 
 export class SyncManager extends ChromeSyncStore {
   constructor(callbacks = {}) {
@@ -131,7 +134,9 @@ export class SyncManager extends ChromeSyncStore {
         // Keep the latest remote changes before publishing a complete snapshot.
         const remote = await this._readChromeData(all);
         if (remote) await this._mergeRemote(remote);
-        return await super._push();
+        // Publish from the same snapshot that was merged. A fresh read in the
+        // base writer could otherwise silently overwrite a newly arrived import.
+        return await super._push(all);
       }
       return await super._pull();
     } catch (error) {
@@ -159,7 +164,8 @@ export class SyncManager extends ChromeSyncStore {
         error: null, errorOperation: null, nextRetryAt: 0, retryAttempts: 0,
         failedFingerprint: null, lastPublishedFingerprint: this._lastPublishedHash
       });
-    } else if (previous.errorOperation === 'pull') {
+    } else if (previous.errorOperation === 'pull' ||
+        ['syncResetRequired', 'syncLegacyClientError', 'syncMissingCloudError', 'syncCloudBusy'].includes(previous.error)) {
       Object.assign(updates, { error: null, errorOperation: null, nextRetryAt: 0, retryAttempts: 0 });
     }
     await this._updateStatus(updates);
@@ -199,24 +205,32 @@ export class SyncManager extends ChromeSyncStore {
     return checkedData(text);
   }
 
-  async _guardChrome(all, config) {
+  _chromeSnapshotGeneration(all) {
     const meta = all[SYNC_META_KEY];
     const control = all[SYNC_CONTROL_KEY];
     if (control && (control.schema !== 2 || typeof control.generation?.id !== 'string' ||
       !control.generation.id || !Number.isSafeInteger(control.generation.rank) || control.generation.rank < 0)) {
       throw new SyncError('syncIntegrityError');
     }
+    const generation = control?.generation?.id || meta?.generation || INITIAL_GENERATION;
+    if (control && meta && !meta.recoveryId && meta.generation !== generation) {
+      // Chrome delivers keys independently. Different modern generations can
+      // temporarily coexist while a reset propagates, without a legacy writer.
+      throw new SyncError(meta.generation ? 'syncCloudBusy' : 'syncLegacyClientError');
+    }
+    return generation;
+  }
+
+  async _guardChrome(all, config) {
+    const meta = all[SYNC_META_KEY];
+    const generation = this._chromeSnapshotGeneration(all);
     if (!meta && config.chromeEstablished) throw new SyncError('syncMissingCloudError');
     if (meta?.recoveryId && config.chromeRecovery?.id !== meta.recoveryId) throw new SyncError('syncCloudBusy');
-    const generation = control?.generation?.id || meta?.generation || INITIAL_GENERATION;
     const expected = config.generations.chrome;
     if (expected && expected !== generation) throw new SyncError('syncResetRequired');
     if (!expected && generation !== INITIAL_GENERATION) {
       const local = await db.exportAll();
       if (local.groups.length || local.items.length || local.tombstones.length) throw new SyncError('syncResetRequired');
-    }
-    if (control && meta && !meta.recoveryId && meta.generation !== generation) {
-      throw new SyncError('syncLegacyClientError');
     }
     if (!expected) await updateConfig({ generations: { ...config.generations, chrome: generation } });
     this._chromeGeneration = generation;
@@ -229,6 +243,16 @@ export class SyncManager extends ChromeSyncStore {
   }
 
   async _writeChromeSnapshot(existing, writeObj, staleKeys) {
+    const latest = await chrome.storage.sync.get(null);
+    if (snapshotState(latest) !== snapshotState(existing)) throw new SyncError('syncChangedError');
+    // A receipt can arrive without changing the snapshot. Preserve it rather
+    // than replacing it with a legacy placeholder collected before the merge.
+    for (const key of Object.keys(writeObj)) {
+      if (key.startsWith(DEVICE_STATE_PREFIX) && key !== this._deviceStateKey(this.deviceId) && latest[key]) {
+        delete writeObj[key];
+      }
+    }
+    existing = latest;
     const quota = Number(chrome.storage.sync.QUOTA_BYTES) || 102400;
     const final = { ...existing, ...writeObj };
     for (const key of staleKeys) delete final[key];
@@ -244,11 +268,19 @@ export class SyncManager extends ChromeSyncStore {
         config = await updateConfig({ chromeRecovery: recovery });
       }
       await verifyBackup(await db.getBackup(recovery.backupId));
+      const beforeRecovery = await chrome.storage.sync.get(null);
+      if (snapshotState(beforeRecovery) !== snapshotState(existing)) throw new SyncError('syncChangedError');
       await chrome.storage.sync.set({ [SYNC_META_KEY]: { chunkCount: 0, recoveryId: recovery.id } });
       if (staleKeys.length) await chrome.storage.sync.remove(staleKeys);
     }
     await chrome.storage.sync.set(writeObj);
-    if (staleKeys.length) await chrome.storage.sync.remove(staleKeys);
+    if (staleKeys.length) {
+      const current = await chrome.storage.sync.get(null);
+      if (current[SYNC_META_KEY]?.snapshotId === writeObj[SYNC_META_KEY].snapshotId) {
+        const safeToRemove = staleKeys.filter(key => current[key] !== undefined && current[key] === existing[key]);
+        if (safeToRemove.length) await chrome.storage.sync.remove(safeToRemove);
+      }
+    }
     const config = await readConfig();
     if (config.chromeRecovery?.kind === 'compact') await updateConfig({ chromeRecovery: null });
   }
@@ -281,7 +313,26 @@ export class SyncManager extends ChromeSyncStore {
     });
   }
 
-  resetCloud({ expectedCurrent } = {}) {
+  async _checkCloudReview(all, expectedCloudState) {
+    if (expectedCloudState && await checksum(snapshotState(all)) !== expectedCloudState) throw new SyncError('syncChangedError');
+  }
+
+  previewRecovery() {
+    return this._enqueue(async () => {
+      const config = await readConfig();
+      if (config.provider !== 'chrome') throw new SyncError('syncLocalOnly');
+      const [local, all] = await Promise.all([db.exportAll(), chrome.storage.sync.get(null)]);
+      let cloud = null, cloudError = null;
+      try {
+        this._chromeSnapshotGeneration(all);
+        cloud = await this._readChromeData(all);
+        if (!cloud) cloudError = 'syncCloudBusy';
+      } catch (error) { cloudError = syncErrorCode(error); }
+      return { local, cloud, cloudError, cloudState: await checksum(snapshotState(all)) };
+    });
+  }
+
+  resetCloud({ expectedCurrent, expectedCloudState } = {}) {
     return this._enqueue(async () => {
       const config = await readConfig();
       if (config.provider === 'local') throw new SyncError('syncLocalOnly');
@@ -291,6 +342,7 @@ export class SyncManager extends ChromeSyncStore {
         throw new SyncError('syncChangedError');
       }
       const all = await chrome.storage.sync.get(null);
+      await this._checkCloudReview(all, expectedCloudState);
       const previous = all[SYNC_CONTROL_KEY]?.generation || { id: INITIAL_GENERATION, rank: 0 };
       const recovery = {
         id: uniqueId(), kind: 'reset', backupId: backup.id,
@@ -367,20 +419,20 @@ export class SyncManager extends ChromeSyncStore {
       !previous.has(record.key) || previous.get(record.key) !== record.deletedAt) });
   }
 
-  adoptCloud() {
+  adoptCloud({ expectedCurrent, expectedCloudState } = {}) {
     return this._enqueue(async () => {
       const config = await readConfig();
       const backup = await createBackup('before-cloud-rejoin');
+      if (expectedCurrent && await checksum(snapshotData(expectedCurrent)) !== await checksum(snapshotData(backup.data))) {
+        throw new SyncError('syncChangedError');
+      }
       let data, generation;
       if (config.provider === 'chrome') {
         const all = await chrome.storage.sync.get(null);
-        const meta = all[SYNC_META_KEY];
-        if (all[SYNC_CONTROL_KEY] && meta?.generation !== all[SYNC_CONTROL_KEY].generation?.id) {
-          throw new SyncError('syncLegacyClientError');
-        }
+        await this._checkCloudReview(all, expectedCloudState);
+        generation = this._chromeSnapshotGeneration(all);
         data = await this._readChromeData(all);
         if (!data) throw new SyncError('syncCloudBusy');
-        generation = all[SYNC_CONTROL_KEY]?.generation?.id || meta.generation || INITIAL_GENERATION;
       } else throw new SyncError('syncLocalOnly');
       await db.replaceAll(data, { expectedCurrent: backup.data });
       await updateConfig({
@@ -395,15 +447,22 @@ export class SyncManager extends ChromeSyncStore {
 
   async diagnostics() {
     const [data, all, config, local] = await Promise.all([
-      db.exportAll(), chrome.storage.sync.get(null), readConfig(), chrome.storage.local.get(SYNC_STATUS_KEY)
+      db.exportAll(), chrome.storage.sync.get(null), readConfig(), chrome.storage.local.get([SYNC_STATUS_KEY, DEVICE_ID_KEY])
     ]);
     const count = all[SYNC_META_KEY]?.chunkCount || 0;
     const deviceStates = Object.entries(all).filter(([key]) => key.startsWith(DEVICE_STATE_PREFIX)).map(([, value]) => value);
     const unused = Object.fromEntries(Object.entries(all).filter(([key]) => key.startsWith(CHUNK_PREFIX) &&
       /^\d+$/.test(key.slice(CHUNK_PREFIX.length)) && Number(key.slice(CHUNK_PREFIX.length)) >= count));
     const prune = getPrunableTombstoneKeys(data.tombstones, deviceStates);
+    const fingerprint = await collectionFingerprint(data);
+    const ownDeviceId = this.deviceId || local[DEVICE_ID_KEY];
+    const generation = config.generations.chrome || INITIAL_GENERATION;
+    const cloudGeneration = all[SYNC_CONTROL_KEY]?.generation?.id || all[SYNC_META_KEY]?.generation || INITIAL_GENERATION;
+    const coherent = cloudGeneration === generation &&
+      (!all[SYNC_CONTROL_KEY] || all[SYNC_META_KEY]?.generation === generation);
     return {
       config, status: local[SYNC_STATUS_KEY] || {},
+      localLinkCount: data.items.length,
       activeBytes: byteSize({ groups: data.groups, items: data.items }),
       deletionBytes: byteSize(data.tombstones), deletionCount: data.tombstones.length,
       metadataBytes: storageBytes(Object.fromEntries(Object.entries(all).filter(([key]) =>
@@ -411,6 +470,9 @@ export class SyncManager extends ChromeSyncStore {
       unusedBytes: storageBytes(unused), unusedCount: Object.keys(unused).length,
       prunableCount: prune.length,
       deviceCount: deviceStates.length,
+      remoteReceiptCount: config.provider === 'chrome' && coherent ? deviceStates.filter(state =>
+        state.deviceId !== ownDeviceId && state.receivedFingerprint === fingerprint &&
+        state.receivedGeneration === generation).length : 0,
       blockingDevices: deviceStates.filter(state => (Number(state.acknowledgedThrough) || 0) < maxDeletedAt(data.tombstones)).length
     };
   }

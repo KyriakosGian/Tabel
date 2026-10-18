@@ -47,6 +47,15 @@ export async function checksum(value) {
   return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+export async function collectionFingerprint(data) {
+  const snapshot = snapshotData(data);
+  const by = key => (a, b) => a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0;
+  snapshot.groups.sort(by('id'));
+  snapshot.items.sort(by('id'));
+  snapshot.tombstones.sort(by('key'));
+  return checksum(snapshot);
+}
+
 export function uniqueId() {
   return crypto.randomUUID();
 }
