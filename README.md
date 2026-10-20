@@ -2,7 +2,7 @@
 
 Tabel is a Chrome extension that saves and organizes open tabs into visual groups.
 
-Version 2.2.0 is available on GitHub. The Chrome Web Store update is pending submission. Manifest V3. English interface.
+Version 2.2.0 is available on the Chrome Web Store and GitHub. Manifest V3. English interface.
 
 [Add to Chrome](https://chromewebstore.google.com/detail/tabel-tab-manager/hmdklfckhfiobokdglandjdndgaefngd) | [Official website](https://kyriakosgian.github.io/Tabel/) | [Report a problem](https://github.com/KyriakosGian/Tabel/issues) | [Releases](https://github.com/KyriakosGian/Tabel/releases)
 

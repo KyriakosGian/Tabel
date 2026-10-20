@@ -11,8 +11,8 @@
 
 - Primary language: English
 - Category: Productivity, workflow and organization
-- Status: Version 2.1.0 is published on the Chrome Web Store.
-- Update: Version 2.2.0 is released on GitHub and ready for Store submission.
+- Status: Version 2.2.0 is published on the Chrome Web Store. Publication confirmed on October 20, 2026.
+- GitHub: Version 2.2.0 is released with the Store package attached.
 - Name: `Tabel: Tab Manager`
 - Summary: `Organize open tabs into synced visual groups, save memory, and restore them whenever you need.`
 
